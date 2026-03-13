@@ -5,7 +5,7 @@ import plotly.express as px
 
 st.set_page_config(
     page_title="Peugeot · Base de Clientes",
-    page_icon="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Peugeot_2021_Logo.svg/120px-Peugeot_2021_Logo.svg.png",
+    page_icon="https://www.peugeot.com.ar/content/dam/peugeot/master/home/peugeot-logo-alt.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )

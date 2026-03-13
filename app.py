@@ -275,9 +275,9 @@ elif pagina == "Por modelo":
             text=mod_uni["n"], textposition="outside",
             textfont=dict(size=10, color="#a0a0b8"),
         ))
-        fig2.update_layout(**layout(280, mr=12, mt=36),
-                           title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0),
-                           xaxis=dict(type="category"))
+        fig2.update_layout(**layout(280, mr=12, mt=36))
+        fig2.update_layout(title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0),
+                           xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"))       
 
     if "mes_compra" in df.columns:
         st.markdown('<p class="section-title">Tendencia mensual por modelo</p>', unsafe_allow_html=True)

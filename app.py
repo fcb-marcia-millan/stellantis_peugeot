@@ -388,14 +388,15 @@ elif pagina == "Empresas":
 
     with col1:
         st.markdown('<p class="section-title">Modelos preferidos</p>', unsafe_allow_html=True)
-        mc = df_corp.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=True)
+        mc = df_corp.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=False)
         fig = go.Figure(go.Bar(
-            x=mc["n"], y=mc["am_modelocl"], orientation="h",
+            x=mc["am_modelocl"].astype(str), y=mc["n"],
             marker_color="#fade2a", marker_line_width=0,
             text=mc["n"], textposition="outside",
             textfont=dict(size=10, color="#a0a0b8"),
         ))
-        fig.update_layout(**layout(280, mr=80))
+        fig.update_layout(**layout(280, mr=12))
+        fig.update_layout(xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"))
         st.plotly_chart(fig, use_container_width=True, config=NO_MB)
 
     with col2:

@@ -164,7 +164,7 @@ if pagina == "General":
  
     total_clientes = df["cl_k_cliente"].nunique() if "cl_k_cliente" in df.columns else len(df)
     total_compras  = len(df_raw) if modelo_sel == "Todos" and provincia_sel == "Todas" and tipo_sel == "Todos" else len(df)
-    promedio       = round(total_compras / total_clientes, 2) if total_clientes > 0 else 0
+    promedio = round(len(df) / total_clientes, 2) if total_clientes > 0 else 0
  
     st.markdown(f"""
     <div class="kpi-grid">

@@ -269,15 +269,15 @@ elif pagina == "Por modelo":
     with col2:
         mod_uni = (df.groupby("am_modelocl")["cl_k_cliente"]
                    .nunique().reset_index(name="n").sort_values("n", ascending=False))
-        fig2 = fig2 = go.Figure(go.Bar(
-            x=mod_uni["n"], y=mod_uni["am_modelocl"].astype(str), orientation="h",
+        fig2 = go.Figure(go.Bar(
+            x=mod_uni["am_modelocl"].astype(str), y=mod_uni["n"],
             marker_color="#0088cc", marker_line_width=0,
             text=mod_uni["n"], textposition="outside",
             textfont=dict(size=10, color="#a0a0b8"),
         ))
-        fig2.update_layout(**layout(280, mr=80, mt=36),
-                           title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0))
-        st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
+        fig2.update_layout(**layout(280, mr=12, mt=36),
+                           title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0),
+                           xaxis=dict(type="category"))
 
     if "mes_compra" in df.columns:
         st.markdown('<p class="section-title">Tendencia mensual por modelo</p>', unsafe_allow_html=True)

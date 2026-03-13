@@ -286,9 +286,11 @@ elif pagina == "Por modelo":
         fig3 = px.line(trend, x="mes_compra", y="n", color="am_modelocl",
                        color_discrete_sequence=["#0088cc","#5794f2","#00aadd","#73bf69","#fade2a","#ff780a"])
         fig3.update_traces(line_width=2)
-        fig3.update_layout(**PLOTLY_LAYOUT, height=240,
-                           legend=dict(font=dict(size=11), orientation="h", y=-0.25),
-                           margin=dict(l=12,r=12,t=8,b=50))
+        fig3.update_layout(**PLOTLY_LAYOUT, height=240)
+        fig3.update_layout(
+            legend=dict(font=dict(size=11), orientation="h", y=-0.25),
+            margin=dict(l=12, r=12, t=8, b=50),
+        )
         st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar": False})
 
     st.markdown('<p class="section-title">Resumen por modelo</p>', unsafe_allow_html=True)

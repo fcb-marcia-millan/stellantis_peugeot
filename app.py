@@ -99,7 +99,7 @@ with st.sidebar:
       <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:3px;color:#e8e8f5;text-transform:uppercase">Peugeot</span>
     </div>
     """, unsafe_allow_html=True)
-    st.caption(f"{len(df_raw):,} registros")
+    st.markdown(f"<p style='text-align:center;font-size:12px;color:#666680;margin-top:2px'>{len(df_raw):,} registros</p>", unsafe_allow_html=True)
     if st.button("🔄 Forzar actualización (del sheet)"):
         st.cache_data.clear()
         st.rerun()

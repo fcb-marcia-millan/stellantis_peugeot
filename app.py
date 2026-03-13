@@ -142,6 +142,23 @@ if tipo_sel != "Todos":
 if len(fecha_rango) == 2 and "vp_f_compra" in df.columns:
     df = df[(df["vp_f_compra"].dt.date >= fecha_rango[0]) &
             (df["vp_f_compra"].dt.date <= fecha_rango[1])]
+# ── Contraseña ────────────────────────────────────────────────────────────────────
+def check_password():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        st.markdown("### 🔒 Acceso restringido")
+        pwd = st.text_input("Contraseña", type="password")
+        if st.button("Ingresar"):
+            if pwd == "FCB_2026!":
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("Contraseña incorrecta")
+        st.stop()
+
+check_password()
 
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.markdown(f"""

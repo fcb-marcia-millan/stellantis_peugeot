@@ -93,8 +93,13 @@ except Exception as e:
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("### 🦁 Peugeot CRM")
-    st.caption(f"{len(df_raw):,} registros - se actualiza cada 5 min")
+    st.markdown("""
+    <div style="text-align:center;padding:16px 0 8px 0">
+      <img src="https://www.peugeot.com.ar/content/dam/peugeot/master/home/peugeot-logo-alt.png" width="80"><br>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:3px;color:#e8e8f5;text-transform:uppercase">Peugeot</span>
+    </div>
+    """, unsafe_allow_html=True)
+    st.caption(f"{len(df_raw):,} registros · refresco cada 5 min")
     if st.button("🔄 Forzar actualización"):
         st.cache_data.clear()
         st.rerun()

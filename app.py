@@ -3,7 +3,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 
-# ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Peugeot · Base de Clientes",
     page_icon="🦁",
@@ -11,7 +10,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── CSS ────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@400;600;700&display=swap');
@@ -19,11 +17,6 @@ html, body, [class*="css"] { font-family: 'Barlow', sans-serif; }
 .stApp { background-color: #0d0d14; }
 [data-testid="stSidebar"] { background-color: #111119 !important; border-right: 1px solid #1e1e2e; }
 [data-testid="stSidebar"] * { color: #a0a0b8 !important; }
-[data-testid="stSidebar"] .stSelectbox label,
-[data-testid="stSidebar"] .stMultiSelect label {
-    font-size: 10px !important; letter-spacing: 1.5px !important;
-    text-transform: uppercase !important; color: #555570 !important;
-}
 .dash-header {
     background: #0a0a12; border: 1px solid #1e1e35; border-radius: 8px;
     padding: 20px 28px; margin-bottom: 4px;
@@ -60,42 +53,38 @@ SHEET_ID = "1P3qFgAygEzKjc2P8jn0inJLji6h5IQEBwB68lx1SwL8"
 GID      = "1933435937"
 CSV_URL  = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
 
-PLOTLY_LAYOUT = dict(
-    paper_bgcolor="#111119", plot_bgcolor="#111119",
+# Base layout sin margin — se pasa siempre por separado para evitar conflictos
+BASE = dict(
+    paper_bgcolor="#111119",
+    plot_bgcolor="#111119",
     font=dict(family="Barlow, sans-serif", color="#a0a0b8", size=11),
-    margin=dict(l=12, r=12, t=36, b=12),
     xaxis=dict(gridcolor="#1e1e30", linecolor="#1e1e30", tickfont=dict(size=10)),
     yaxis=dict(gridcolor="#1e1e30", linecolor="#1e1e30", tickfont=dict(size=10)),
     colorway=["#0088cc","#5794f2","#00aadd","#73bf69","#fade2a","#ff780a"],
 )
 
+def layout(height=200, ml=12, mr=50, mt=8, mb=8, **extra):
+    return dict(**BASE, height=height, margin=dict(l=ml, r=mr, t=mt, b=mb), **extra)
+
 # ── Carga de datos ─────────────────────────────────────────────────────────────
-@st.cache_data(ttl=300)  # refresca automáticamente cada 5 minutos
+@st.cache_data(ttl=300)
 def load_data():
     df = pd.read_csv(CSV_URL)
     df.columns = [c.strip() for c in df.columns]
-
-    # Normalizar nombre de columna modelo
     if "am_modelo" in df.columns and "am_modelocl" not in df.columns:
         df = df.rename(columns={"am_modelo": "am_modelocl"})
-
-    # Convertir fecha
     if "vp_f_compra" in df.columns:
         df["vp_f_compra"] = pd.to_datetime(df["vp_f_compra"], errors="coerce", dayfirst=True)
         df["mes_compra"]  = df["vp_f_compra"].dt.to_period("M").astype(str)
         df["año_compra"]  = df["vp_f_compra"].dt.year
-
-    # Tipo cliente
     if "empresa" in df.columns:
         df["tipo_cliente"] = df["empresa"].apply(
             lambda x: "Corporativo" if pd.notna(x) and str(x).strip() not in ("", "nan") else "Particular"
         )
     else:
         df["tipo_cliente"] = "Particular"
-
     return df
 
-# ── Cargar datos ───────────────────────────────────────────────────────────────
 try:
     df_raw = load_data()
 except Exception as e:
@@ -105,11 +94,10 @@ except Exception as e:
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 🦁 Peugeot CRM")
-    st.caption(f"{len(df_raw):,} registros · se refresca cada 5 min")
+    st.caption(f"{len(df_raw):,} registros · refresco cada 5 min")
     if st.button("🔄 Forzar actualización"):
         st.cache_data.clear()
         st.rerun()
-
     st.markdown("---")
     st.markdown("#### Filtros")
 
@@ -138,7 +126,7 @@ with st.sidebar:
     pagina = st.radio("", ["General", "Por modelo", "Por provincia", "Empresas"],
                       label_visibility="collapsed")
 
-# ── Aplicar filtros ────────────────────────────────────────────────────────────
+# ── Filtros ────────────────────────────────────────────────────────────────────
 df = df_raw.copy()
 if modelo_sel != "Todos":
     df = df[df["am_modelocl"] == modelo_sel]
@@ -161,6 +149,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
+
+NO_MB = {"displayModeBar": False}
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GENERAL
@@ -221,8 +211,8 @@ if pagina == "General":
             text=mod_df["n"], textposition="outside",
             textfont=dict(size=10, color="#a0a0b8"),
         ))
-        fig.update_layout(**PLOTLY_LAYOUT, height=180, margin=dict(l=12,r=50,t=8,b=8))
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+        fig.update_layout(**layout(180, mr=60))
+        st.plotly_chart(fig, use_container_width=True, config=NO_MB)
 
         if "cl_dir_provincia" in df.columns:
             st.markdown('<p class="section-title">Clientes por provincia</p>', unsafe_allow_html=True)
@@ -235,8 +225,8 @@ if pagina == "General":
                 text=prov_df["n"], textposition="outside",
                 textfont=dict(size=10, color="#a0a0b8"),
             ))
-            fig2.update_layout(**PLOTLY_LAYOUT, height=220, margin=dict(l=12,r=50,t=8,b=8))
-            st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
+            fig2.update_layout(**layout(220, mr=60))
+            st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
     if "mes_compra" in df.columns:
         st.markdown('<p class="section-title">Compras por mes</p>', unsafe_allow_html=True)
@@ -246,8 +236,8 @@ if pagina == "General":
             marker_color="#0088cc", marker_line_width=0,
             hovertemplate="<b>%{x}</b><br>Compras: %{y}<extra></extra>",
         ))
-        fig3.update_layout(**PLOTLY_LAYOUT, height=160, margin=dict(l=12,r=12,t=8,b=8))
-        st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar": False})
+        fig3.update_layout(**layout(160, mr=12))
+        st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # POR MODELO
@@ -262,10 +252,11 @@ elif pagina == "Por modelo":
             marker=dict(colors=["#0088cc","#5794f2","#00aadd","#73bf69","#fade2a","#ff780a","#e02f44"]),
             textfont=dict(size=11),
         ))
-        fig.update_layout(**PLOTLY_LAYOUT, height=280, showlegend=True,
+        fig.update_layout(**layout(280, mr=12, mt=36),
+                          showlegend=True,
                           title=dict(text="Distribución de compras", font=dict(size=12), x=0),
                           legend=dict(font=dict(size=11)))
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(fig, use_container_width=True, config=NO_MB)
 
     with col2:
         mod_uni = (df.groupby("am_modelocl")["cl_k_cliente"]
@@ -276,9 +267,9 @@ elif pagina == "Por modelo":
             text=mod_uni["n"], textposition="outside",
             textfont=dict(size=10, color="#a0a0b8"),
         ))
-        fig2.update_layout(**PLOTLY_LAYOUT, height=280,
+        fig2.update_layout(**layout(280, mr=12, mt=36),
                            title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0))
-        st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
     if "mes_compra" in df.columns:
         st.markdown('<p class="section-title">Tendencia mensual por modelo</p>', unsafe_allow_html=True)
@@ -286,12 +277,9 @@ elif pagina == "Por modelo":
         fig3 = px.line(trend, x="mes_compra", y="n", color="am_modelocl",
                        color_discrete_sequence=["#0088cc","#5794f2","#00aadd","#73bf69","#fade2a","#ff780a"])
         fig3.update_traces(line_width=2)
-        fig3.update_layout(**PLOTLY_LAYOUT, height=240)
-        fig3.update_layout(
-            legend=dict(font=dict(size=11), orientation="h", y=-0.25),
-            margin=dict(l=12, r=12, t=8, b=50),
-        )
-        st.plotly_chart(fig3, use_container_width=True, config={"displayModeBar": False})
+        fig3.update_layout(**layout(240, mr=12, mb=50),
+                           legend=dict(font=dict(size=11), orientation="h", y=-0.25))
+        st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
 
     st.markdown('<p class="section-title">Resumen por modelo</p>', unsafe_allow_html=True)
     resumen = (df.groupby("am_modelocl")
@@ -322,10 +310,9 @@ elif pagina == "Por provincia":
                 text=prov_df["clientes"], textposition="outside",
                 textfont=dict(size=10, color="#a0a0b8"),
             ))
-            fig.update_layout(**PLOTLY_LAYOUT, height=340,
-                              title=dict(text="Clientes únicos por provincia", font=dict(size=12), x=0),
-                              margin=dict(l=12,r=60,t=36,b=12))
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+            fig.update_layout(**layout(340, ml=12, mr=60, mt=36, mb=12),
+                              title=dict(text="Clientes únicos por provincia", font=dict(size=12), x=0))
+            st.plotly_chart(fig, use_container_width=True, config=NO_MB)
 
         with col2:
             if "cl_dir_localidad" in df.columns:
@@ -339,10 +326,9 @@ elif pagina == "Por provincia":
                     text=loc_df["n"], textposition="outside",
                     textfont=dict(size=10, color="#a0a0b8"),
                 ))
-                fig2.update_layout(**PLOTLY_LAYOUT, height=340,
-                                   title=dict(text="Top localidades", font=dict(size=12), x=0),
-                                   margin=dict(l=12,r=60,t=36,b=12))
-                st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
+                fig2.update_layout(**layout(340, ml=12, mr=60, mt=36, mb=12),
+                                   title=dict(text="Top localidades", font=dict(size=12), x=0))
+                st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
         st.markdown('<p class="section-title">Modelo más comprado por provincia</p>', unsafe_allow_html=True)
         top_mod = (df.groupby(["cl_dir_provincia","am_modelocl"]).size()
@@ -417,8 +403,8 @@ elif pagina == "Empresas":
                 text=mc["n"], textposition="outside",
                 textfont=dict(size=10, color="#a0a0b8"),
             ))
-            fig.update_layout(**PLOTLY_LAYOUT, height=200, margin=dict(l=12,r=50,t=8,b=8))
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+            fig.update_layout(**layout(200, mr=60))
+            st.plotly_chart(fig, use_container_width=True, config=NO_MB)
 
             if "cl_dir_provincia" in df_corp.columns:
                 st.markdown('<p class="section-title">Por provincia</p>', unsafe_allow_html=True)
@@ -430,10 +416,9 @@ elif pagina == "Empresas":
                     text=pc["n"], textposition="outside",
                     textfont=dict(size=10, color="#a0a0b8"),
                 ))
-                fig2.update_layout(**PLOTLY_LAYOUT, height=200, margin=dict(l=12,r=50,t=8,b=8))
-                st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
+                fig2.update_layout(**layout(200, mr=60))
+                st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
-# ── Footer ─────────────────────────────────────────────────────────────────────
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align:center;font-size:10px;color:#333350;letter-spacing:1px;'>"

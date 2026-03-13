@@ -147,8 +147,8 @@ if len(fecha_rango) == 2 and "vp_f_compra" in df.columns:
 st.markdown(f"""
 <div class="dash-header">
   <div>
-    <div class="dash-title">Peugeot Argentina</div>
-    <div class="dash-sub">Base de Clientes · Dashboard CRM</div>
+    <div class="dash-title">Stellantis: Peugeot</div>
+    <div class="dash-sub">Base de Clientes</div>
   </div>
   <div class="dash-badge">Vista: {pagina}</div>
 </div>
@@ -427,6 +427,6 @@ elif pagina == "Empresas":
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align:center;font-size:10px;color:#333350;letter-spacing:1px;'>"
-    "PEUGEOT ARGENTINA · DASHBOARD CRM · BASE DE CLIENTES</p>",
+    "PEUGEOT - BASE DE CLIENTES</p>",
     unsafe_allow_html=True
 )

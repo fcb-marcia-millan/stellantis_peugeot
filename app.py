@@ -161,64 +161,52 @@ NO_MB = {"displayModeBar": False}
 # GENERAL
 # ══════════════════════════════════════════════════════════════════════════════
 if pagina == "General":
-
+ 
     total_clientes = df["cl_k_cliente"].nunique() if "cl_k_cliente" in df.columns else len(df)
     total_compras  = len(df)
     promedio       = round(total_compras / total_clientes, 2) if total_clientes > 0 else 0
-
+ 
     st.markdown(f"""
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">Clientes únicos</div>
         <div class="kpi-value">{total_clientes:,}</div>
-        <div class="kpi-sub"> Suma de todos los DNI únicos</div>
+        <div class="kpi-sub">COUNT DISTINCT · cl_k_cliente</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Total de compras</div>
         <div class="kpi-value">{total_compras:,}</div>
-        <div class="kpi-sub">Total de registros en la base</div>
+        <div class="kpi-sub">COUNT · vp_f_compra</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Promedio por cliente</div>
         <div class="kpi-value">{promedio}</div>
-        <div class="kpi-sub">Se calcula con: Compras totales / clientes únicos</div>
+        <div class="kpi-sub">compras / clientes únicos</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:50%"></div></div>
       </div>
     </div>
     """, unsafe_allow_html=True)
-
+ 
     st.markdown("<br>", unsafe_allow_html=True)
-    col_tabla, col_charts = st.columns([3, 2], gap="medium")
-
-    with col_tabla:
-        st.markdown('<p class="section-title">Registro de clientes</p>', unsafe_allow_html=True)
-        cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","am_modelocl",
-                                  "cl_dir_localidad","cl_dir_provincia","empresa","vp_f_compra"]
-                     if c in df.columns]
-        rename_map = {
-            "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
-            "am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
-            "cl_dir_provincia":"Provincia","empresa":"Empresa","vp_f_compra":"F. Compra"
-        }
-        tabla = df[cols_show].rename(columns=rename_map).head(500)
-        if "F. Compra" in tabla.columns:
-            tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
-        st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
-
-    with col_charts:
-        st.markdown('<p class="section-title">Compras por modelo</p>', unsafe_allow_html=True)
-        mod_df = df.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=True)
+ 
+    # ── Fila: Compras por año | Clientes por provincia ──
+    col_anio, col_prov = st.columns(2, gap="medium")
+ 
+    with col_anio:
+        st.markdown('<p class="section-title">Compras por año</p>', unsafe_allow_html=True)
+        anio_df = df.groupby("año_compra").size().reset_index(name="n").sort_values("n", ascending=True)
         fig = go.Figure(go.Bar(
-            x=mod_df["n"], y=mod_df["am_modelocl"], orientation="h",
+            x=anio_df["n"], y=anio_df["año_compra"].astype(str), orientation="h",
             marker_color="#0088cc", marker_line_width=0,
-            text=mod_df["n"], textposition="outside",
+            text=anio_df["n"], textposition="outside",
             textfont=dict(size=10, color="#a0a0b8"),
         ))
-        fig.update_layout(**layout(180, mr=60))
+        fig.update_layout(**layout(240, mr=60))
         st.plotly_chart(fig, use_container_width=True, config=NO_MB)
-
+ 
+    with col_prov:
         if "cl_dir_provincia" in df.columns:
             st.markdown('<p class="section-title">Clientes por provincia</p>', unsafe_allow_html=True)
             prov_df = (df.groupby("cl_dir_provincia")["cl_k_cliente"]
@@ -230,9 +218,10 @@ if pagina == "General":
                 text=prov_df["n"], textposition="outside",
                 textfont=dict(size=10, color="#a0a0b8"),
             ))
-            fig2.update_layout(**layout(220, mr=60))
+            fig2.update_layout(**layout(240, mr=60))
             st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
-
+ 
+    # ── Compras por mes ──
     if "mes_compra" in df.columns:
         st.markdown('<p class="section-title">Compras por mes</p>', unsafe_allow_html=True)
         time_df = df.groupby("mes_compra").size().reset_index(name="n").sort_values("mes_compra")
@@ -243,7 +232,21 @@ if pagina == "General":
         ))
         fig3.update_layout(**layout(160, mr=12))
         st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
-
+ 
+    # ── Tabla al final ──
+    st.markdown('<p class="section-title">Registro de clientes</p>', unsafe_allow_html=True)
+    cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","am_modelocl",
+                              "cl_dir_localidad","cl_dir_provincia","empresa","vp_f_compra"]
+                 if c in df.columns]
+    rename_map = {
+        "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
+        "am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
+        "cl_dir_provincia":"Provincia","empresa":"Empresa","vp_f_compra":"F. Compra"
+    }
+    tabla = df[cols_show].rename(columns=rename_map).head(500)
+    if "F. Compra" in tabla.columns:
+        tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
+    st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
 # ══════════════════════════════════════════════════════════════════════════════
 # POR MODELO
 # ══════════════════════════════════════════════════════════════════════════════

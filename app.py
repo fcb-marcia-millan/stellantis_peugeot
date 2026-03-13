@@ -171,19 +171,19 @@ if pagina == "General":
       <div class="kpi-card">
         <div class="kpi-label">Clientes únicos</div>
         <div class="kpi-value">{total_clientes:,}</div>
-        <div class="kpi-sub">COUNT DISTINCT · cl_k_cliente</div>
+        <div class="kpi-sub">Suma de DNI's únicos registrados</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Total de compras</div>
         <div class="kpi-value">{total_compras:,}</div>
-        <div class="kpi-sub">COUNT · vp_f_compra</div>
+        <div class="kpi-sub">Todos los registros</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Promedio por cliente</div>
         <div class="kpi-value">{promedio}</div>
-        <div class="kpi-sub">compras / clientes únicos</div>
+        <div class="kpi-sub">Total compras / Clientes únicos</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:50%"></div></div>
       </div>
     </div>
@@ -270,12 +270,12 @@ elif pagina == "Por modelo":
         mod_uni = (df.groupby("am_modelocl")["cl_k_cliente"]
                    .nunique().reset_index(name="n").sort_values("n", ascending=False))
         fig2 = go.Figure(go.Bar(
-            x=mod_uni["am_modelocl"], y=mod_uni["n"],
+            x=mod_uni["n"], y=mod_uni["am_modelocl"], orientation="h",
             marker_color="#0088cc", marker_line_width=0,
             text=mod_uni["n"], textposition="outside",
             textfont=dict(size=10, color="#a0a0b8"),
         ))
-        fig2.update_layout(**layout(280, mr=12, mt=36),
+        fig2.update_layout(**layout(280, mr=80, mt=36),
                            title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0))
         st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
@@ -351,81 +351,78 @@ elif pagina == "Por provincia":
 # ══════════════════════════════════════════════════════════════════════════════
 elif pagina == "Empresas":
 
-    df_corp = df[df["tipo_cliente"] == "Corporativo"].copy()
+    df_corp = df[df["empresa"].astype(str).str.strip() == "1"].copy()
     total_corp   = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else len(df_corp)
-    total_emp    = df_corp["empresa"].nunique() if "empresa" in df_corp.columns else 0
     compras_corp = len(df_corp)
 
     st.markdown(f"""
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">Clientes corporativos</div>
+        <div class="kpi-label">Clientes de empresa</div>
         <div class="kpi-value" style="color:#fade2a">{total_corp:,}</div>
-        <div class="kpi-sub">COUNT DISTINCT · cl_k_cliente</div>
+        <div class="kpi-sub">COUNT DISTINCT · cl_k_cliente con empresa=1</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#fade2a"></div></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Empresas únicas</div>
-        <div class="kpi-value" style="color:#fade2a">{total_emp:,}</div>
-        <div class="kpi-sub">COUNT DISTINCT · empresa</div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:60%;background:#fade2a"></div></div>
+        <div class="kpi-label">Total compras empresas</div>
+        <div class="kpi-value" style="color:#fade2a">{compras_corp:,}</div>
+        <div class="kpi-sub">COUNT · registros con empresa=1</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%;background:#fade2a"></div></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Compras corporativas</div>
-        <div class="kpi-value" style="color:#fade2a">{compras_corp:,}</div>
-        <div class="kpi-sub">COUNT · vp_f_compra</div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%;background:#fade2a"></div></div>
+        <div class="kpi-label">% sobre total</div>
+        <div class="kpi-value" style="color:#fade2a">{round(compras_corp/len(df)*100,1) if len(df)>0 else 0}%</div>
+        <div class="kpi-sub">compras empresa / total compras</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{round(compras_corp/len(df)*100,1) if len(df)>0 else 0}%;background:#fade2a"></div></div>
       </div>
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    col1, col2 = st.columns([3, 2], gap="medium")
+
+    # ── Fila: Modelos preferidos | Por provincia ──
+    col1, col2 = st.columns(2, gap="medium")
 
     with col1:
-        st.markdown('<p class="section-title">Registro de empresas</p>', unsafe_allow_html=True)
-        if "empresa" in df_corp.columns and len(df_corp) > 0:
-            emp_tab = (df_corp.groupby("empresa")
-                       .agg(contactos=("cl_k_cliente","nunique"),
-                            compras=("vp_f_compra","count"),
-                            provincia=("cl_dir_provincia", lambda x: x.mode()[0] if len(x) > 0 else ""),
-                            modelo=("am_modelocl", lambda x: x.mode()[0] if len(x) > 0 else ""),
-                            ultima_compra=("vp_f_compra","max"))
-                       .reset_index()
-                       .rename(columns={"empresa":"Empresa","contactos":"Contactos",
-                                         "compras":"Compras","provincia":"Provincia",
-                                         "modelo":"Modelo top","ultima_compra":"Última compra"})
-                       .sort_values("Compras", ascending=False))
-            emp_tab["Última compra"] = emp_tab["Última compra"].dt.strftime("%d/%m/%Y")
-            st.dataframe(emp_tab, use_container_width=True, hide_index=True, height=320)
-        else:
-            st.info("No hay clientes corporativos con los filtros actuales.")
+        st.markdown('<p class="section-title">Modelos preferidos</p>', unsafe_allow_html=True)
+        mc = df_corp.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=True)
+        fig = go.Figure(go.Bar(
+            x=mc["n"], y=mc["am_modelocl"], orientation="h",
+            marker_color="#fade2a", marker_line_width=0,
+            text=mc["n"], textposition="outside",
+            textfont=dict(size=10, color="#a0a0b8"),
+        ))
+        fig.update_layout(**layout(280, mr=80))
+        st.plotly_chart(fig, use_container_width=True, config=NO_MB)
 
     with col2:
-        if len(df_corp) > 0:
-            st.markdown('<p class="section-title">Modelos preferidos</p>', unsafe_allow_html=True)
-            mc = df_corp.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=True)
-            fig = go.Figure(go.Bar(
-                x=mc["n"], y=mc["am_modelocl"], orientation="h",
-                marker_color="#fade2a", marker_line_width=0,
-                text=mc["n"], textposition="outside",
+        if "cl_dir_provincia" in df_corp.columns:
+            st.markdown('<p class="section-title">Por provincia</p>', unsafe_allow_html=True)
+            pc = (df_corp.groupby("cl_dir_provincia")["cl_k_cliente"]
+                  .nunique().reset_index(name="n").sort_values("n", ascending=True).tail(8))
+            fig2 = go.Figure(go.Bar(
+                x=pc["n"], y=pc["cl_dir_provincia"], orientation="h",
+                marker_color="#c8a800", marker_line_width=0,
+                text=pc["n"], textposition="outside",
                 textfont=dict(size=10, color="#a0a0b8"),
             ))
-            fig.update_layout(**layout(200, mr=60))
-            st.plotly_chart(fig, use_container_width=True, config=NO_MB)
+            fig2.update_layout(**layout(280, mr=80))
+            st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
-            if "cl_dir_provincia" in df_corp.columns:
-                st.markdown('<p class="section-title">Por provincia</p>', unsafe_allow_html=True)
-                pc = (df_corp.groupby("cl_dir_provincia")["cl_k_cliente"]
-                      .nunique().reset_index(name="n").sort_values("n", ascending=True).tail(6))
-                fig2 = go.Figure(go.Bar(
-                    x=pc["n"], y=pc["cl_dir_provincia"], orientation="h",
-                    marker_color="#c8a800", marker_line_width=0,
-                    text=pc["n"], textposition="outside",
-                    textfont=dict(size=10, color="#a0a0b8"),
-                ))
-                fig2.update_layout(**layout(200, mr=60))
-                st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
+    # ── Tabla al final ──
+    st.markdown('<p class="section-title">Registro de clientes de empresa</p>', unsafe_allow_html=True)
+    cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","am_modelocl",
+                              "cl_dir_localidad","cl_dir_provincia","vp_f_compra"]
+                 if c in df_corp.columns]
+    rename_map = {
+        "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
+        "am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
+        "cl_dir_provincia":"Provincia","vp_f_compra":"F. Compra"
+    }
+    tabla = df_corp[cols_show].rename(columns=rename_map).head(500)
+    if "F. Compra" in tabla.columns:
+        tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
+    st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(

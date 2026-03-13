@@ -79,8 +79,8 @@ def load_data():
         df["año_compra"]  = df["vp_f_compra"].dt.year
     if "empresa" in df.columns:
         df["tipo_cliente"] = df["empresa"].apply(
-            lambda x: "Corporativo" if pd.notna(x) and str(x).strip() not in ("", "nan") else "Particular"
-        )
+    lambda x: "Corporativo" if pd.notna(x) and str(x).strip() not in ("", "nan") else "Particular"
+)
     else:
         df["tipo_cliente"] = "Particular"
     return df
@@ -269,7 +269,7 @@ elif pagina == "Por modelo":
     with col2:
         mod_uni = (df.groupby("am_modelocl")["cl_k_cliente"]
                    .nunique().reset_index(name="n").sort_values("n", ascending=False))
-        fig2 = go.Figure(go.Bar(
+      fig2 = go.Figure(go.Bar(
             x=mod_uni["n"], y=mod_uni["am_modelocl"], orientation="h",
             marker_color="#0088cc", marker_line_width=0,
             text=mod_uni["n"], textposition="outside",
@@ -351,7 +351,7 @@ elif pagina == "Por provincia":
 # ══════════════════════════════════════════════════════════════════════════════
 elif pagina == "Empresas":
 
-    df_corp = df[df["empresa"].astype(str).str.strip() == "1"].copy()
+    df_corp = df[pd.to_numeric(df["empresa"], errors="coerce") == 1].copy()
     total_corp   = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else len(df_corp)
     compras_corp = len(df_corp)
 

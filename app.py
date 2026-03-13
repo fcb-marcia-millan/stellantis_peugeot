@@ -99,8 +99,8 @@ with st.sidebar:
       <span style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:3px;color:#e8e8f5;text-transform:uppercase">Peugeot</span>
     </div>
     """, unsafe_allow_html=True)
-    st.caption(f"{len(df_raw):,} registros · refresco cada 5 min")
-    if st.button("🔄 Forzar actualización"):
+    st.caption(f"{len(df_raw):,} registros")
+    if st.button("🔄 Forzar actualización (del sheet)"):
         st.cache_data.clear()
         st.rerun()
     st.markdown("---")

@@ -256,12 +256,12 @@ elif pagina == "Por modelo":
     with col1:
         mod_pie = df.groupby("am_modelocl").size().reset_index(name="n")
         fig = go.Figure(go.Pie(
-            labels=mod_pie["am_modelocl"], values=mod_pie["n"], hole=0.5,
+            labels=mod_pie["am_modelocl"].astype(str), values=mod_pie["n"], hole=0.5,
             marker=dict(colors=["#0088cc","#5794f2","#00aadd","#73bf69","#fade2a","#ff780a","#e02f44"]),
             textfont=dict(size=11),
         ))
-        fig.update_layout(**layout(280, mr=12, mt=36),
-                          showlegend=True,
+        fig.update_layout(**layout(280, mr=12, mt=36))
+        fig.update_layout(showlegend=True,
                           title=dict(text="Distribución de compras", font=dict(size=12), x=0),
                           legend=dict(font=dict(size=11)))
         st.plotly_chart(fig, use_container_width=True, config=NO_MB)
@@ -276,8 +276,11 @@ elif pagina == "Por modelo":
             textfont=dict(size=10, color="#a0a0b8"),
         ))
         fig2.update_layout(**layout(280, mr=12, mt=36))
-        fig2.update_layout(title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0),
-                           xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"))       
+        fig2.update_layout(
+            title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0),
+            xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"),
+        )
+        st.plotly_chart(fig2, use_container_width=True, config=NO_MB)     
 
     if "mes_compra" in df.columns:
         st.markdown('<p class="section-title">Tendencia mensual por modelo</p>', unsafe_allow_html=True)

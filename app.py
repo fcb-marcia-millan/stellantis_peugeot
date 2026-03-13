@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 st.set_page_config(
-    page_title="Peugeot · Base de Clientes",
+    page_title="Peugeot - Base de Clientes",
     page_icon="https://www.peugeot.com.ar/content/dam/peugeot/master/home/peugeot-logo-alt.png",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -94,7 +94,7 @@ except Exception as e:
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### 🦁 Peugeot CRM")
-    st.caption(f"{len(df_raw):,} registros · refresco cada 5 min")
+    st.caption(f"{len(df_raw):,} registros - se actualiza cada 5 min")
     if st.button("🔄 Forzar actualización"):
         st.cache_data.clear()
         st.rerun()
@@ -166,19 +166,19 @@ if pagina == "General":
       <div class="kpi-card">
         <div class="kpi-label">Clientes únicos</div>
         <div class="kpi-value">{total_clientes:,}</div>
-        <div class="kpi-sub">COUNT DISTINCT · cl_k_cliente</div>
+        <div class="kpi-sub"> Suma de todos los DNI únicos</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Total de compras</div>
         <div class="kpi-value">{total_compras:,}</div>
-        <div class="kpi-sub">COUNT · vp_f_compra</div>
+        <div class="kpi-sub">Total de registros en la base</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Promedio por cliente</div>
         <div class="kpi-value">{promedio}</div>
-        <div class="kpi-sub">compras / clientes únicos</div>
+        <div class="kpi-sub">Se calcula con: Compras totales / clientes únicos</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:50%"></div></div>
       </div>
     </div>

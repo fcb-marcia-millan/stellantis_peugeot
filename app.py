@@ -269,7 +269,7 @@ elif pagina == "Por modelo":
     with col2:
         mod_uni = (df.groupby("am_modelocl")["cl_k_cliente"]
                    .nunique().reset_index(name="n").sort_values("n", ascending=False))
-      fig2 = go.Figure(go.Bar(
+        fig2 = go.Figure(go.Bar(
             x=mod_uni["n"], y=mod_uni["am_modelocl"], orientation="h",
             marker_color="#0088cc", marker_line_width=0,
             text=mod_uni["n"], textposition="outside",

@@ -519,6 +519,8 @@ elif pagina == "Género":
         gender_counts = df["Gender"].value_counts()
         total_gen     = len(df)
         sin_dato_n    = int(gender_counts.get(SIN_DATO, 0))
+        # DEBUG TEMPORAL - borrar luego
+        st.info(f"Valores únicos en Gender: {df['Gender'].unique().tolist()} | Sin dato: {sin_dato_n}")
         pct_sin_dato  = round(sin_dato_n / total_gen * 100, 1) if total_gen > 0 else 0
 
         generos_reales = [g for g in gender_counts.index if g != SIN_DATO]

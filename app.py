@@ -323,25 +323,23 @@ elif pagina == "Por modelo":
     col1, col2 = st.columns(2, gap="medium")
 
     with col1:
-        # Torta: distribución de géneros (no de modelos)
-        if "Gender" in df.columns:
-            gen_pie = df["Gender"].value_counts().reset_index()
-            gen_pie.columns = ["Gender", "n"]
-            pie_colors = [COLOR_MAP_GEN.get(g, "#5794f2") for g in gen_pie["Gender"]]
-            fig = go.Figure(go.Pie(
-                labels=gen_pie["Gender"], values=gen_pie["n"], hole=0.5,
-                marker=dict(colors=pie_colors),
-                textfont=dict(size=11),
-            ))
-            fig.update_layout(**layout(280, mr=12, mt=36))
-            fig.update_layout(
-                showlegend=True,
-                title=dict(text="Distribución por género", font=dict(size=12), x=0),
-                legend=dict(font=dict(size=11)),
-            )
-            st.plotly_chart(fig, use_container_width=True, config=NO_MB)
-        else:
-            st.info("No se encontró la columna Gender.")
+        # Torta: distribución de compras por modelo
+        mod_pie = df.groupby("am_modelocl").size().reset_index(name="n")
+        colors  = ["#0088cc","#5794f2","#00aadd","#73bf69","#fade2a","#ff780a","#e02f44","#555570"]
+        label_colors = ["#555570" if l == SIN_DATO else colors[i % len(colors)]
+                        for i, l in enumerate(mod_pie["am_modelocl"])]
+        fig = go.Figure(go.Pie(
+            labels=mod_pie["am_modelocl"].astype(str), values=mod_pie["n"], hole=0.5,
+            marker=dict(colors=label_colors),
+            textfont=dict(size=11),
+        ))
+        fig.update_layout(**layout(280, mr=12, mt=36))
+        fig.update_layout(
+            showlegend=True,
+            title=dict(text="Distribución de compras por modelo", font=dict(size=12), x=0),
+            legend=dict(font=dict(size=11)),
+        )
+        st.plotly_chart(fig, use_container_width=True, config=NO_MB)
 
     with col2:
         mod_uni = (df.groupby("am_modelocl")["cl_k_cliente"]
@@ -547,13 +545,14 @@ elif pagina == "Género":
               <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{pct}%;background:{col}"></div></div>
             </div>"""
 
-        kpi_html += f"""
-        <div class="kpi-card">
-          <div class="kpi-label">Sin dato</div>
-          <div class="kpi-value" style="color:#555570">{sin_dato_n:,}</div>
-          <div class="kpi-sub">{pct_sin_dato}% sin información</div>
-          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{pct_sin_dato}%;background:#555570"></div></div>
-        </div>"""
+        if sin_dato_n > 0:
+            kpi_html += f"""
+            <div class="kpi-card">
+              <div class="kpi-label">Sin dato</div>
+              <div class="kpi-value" style="color:#555570">{sin_dato_n:,}</div>
+              <div class="kpi-sub">{pct_sin_dato}% sin información</div>
+              <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{pct_sin_dato}%;background:#555570"></div></div>
+            </div>"""
 
         st.markdown(f'<div class="kpi-grid">{kpi_html}</div>', unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)

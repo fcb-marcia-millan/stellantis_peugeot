@@ -98,20 +98,18 @@ def load_data():
             df[col] = df[col].fillna(SIN_DATO).replace("", SIN_DATO).astype(str).str.strip()
             df[col] = df[col].replace("nan", SIN_DATO)
 
-    # Gender: normalizar todos los valores no reconocidos → "Sin dato"
+    # Gender: null/vacío/desconocido → "Sin dato", normalizar Male/Female
     if "Gender" in df.columns:
-        df["Gender"] = df["Gender"].fillna("").astype(str).str.strip()
-        GENEROS_VALIDOS = {"male", "female", "m", "f", "masculino", "femenino"}
-        def normalizar_gender(v):
-            v_clean = v.strip()
-            if v_clean.lower() in GENEROS_VALIDOS:
-                # Normalizar a Male/Female
-                if v_clean.lower() in ("male", "m", "masculino"):
-                    return "Male"
-                if v_clean.lower() in ("female", "f", "femenino"):
-                    return "Female"
-            return SIN_DATO
-        df["Gender"] = df["Gender"].apply(normalizar_gender)
+        df["Gender"] = (df["Gender"]
+                        .fillna(SIN_DATO)
+                        .astype(str)
+                        .str.strip()
+                        .replace({"nan": SIN_DATO, "": SIN_DATO, "Unknown": SIN_DATO}))
+        df["Gender"] = df["Gender"].apply(
+            lambda v: "Male"   if v.lower() in ("male", "m", "masculino")   else
+                      "Female" if v.lower() in ("female", "f", "femenino") else
+                      SIN_DATO
+        )
 
     if "vp_f_compra" in df.columns:
         df["vp_f_compra"] = pd.to_datetime(df["vp_f_compra"], errors="coerce", dayfirst=True)

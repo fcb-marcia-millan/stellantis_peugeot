@@ -1,4 +1,4 @@
-import streamlit as st
+importimport streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
@@ -107,7 +107,20 @@ def load_data():
             .astype(str)
             .str.strip()
         )
-        df["Gender"] = df["Gender"].replace({"nan": SIN_DATO, "Unknown": SIN_DATO})
+        # Reemplazar todas las variantes de Unknown/sin dato
+        df["Gender"] = df["Gender"].replace({
+            "nan": SIN_DATO,
+            "Unknown": SIN_DATO,
+            "unknown": SIN_DATO,
+            "UNKNOWN": SIN_DATO,
+            "Sin dato": SIN_DATO,
+            "None": SIN_DATO,
+            "none": SIN_DATO,
+            "": SIN_DATO,
+        })
+        # Captura cualquier otra variante con regex
+        mask_unknown = df["Gender"].str.lower().str.contains("unknown", na=False)
+        df.loc[mask_unknown, "Gender"] = SIN_DATO
 
     if "vp_f_compra" in df.columns:
         df["vp_f_compra"] = pd.to_datetime(df["vp_f_compra"], errors="coerce", dayfirst=True)
@@ -509,6 +522,11 @@ elif pagina == "Género":
     if "Gender" not in df.columns:
         st.warning("No se encontró la columna Gender en tus datos.")
     else:
+        # Si hay dudas de caché, limpiar y recargar
+        if st.button("🔄 Actualizar datos de género"):
+            st.cache_data.clear()
+            st.rerun()
+
         gender_counts = df["Gender"].value_counts()
         total_gen     = len(df)
         sin_dato_n    = gender_counts.get(SIN_DATO, 0)
@@ -578,8 +596,8 @@ elif pagina == "Género":
             fig3 = px.bar(gp_df, x="cl_dir_provincia", y="n", color="Gender",
                           color_discrete_map=COLOR_MAP_GEN,
                           barmode="stack")
-            fig3.update_layout(**layout(280, mr=12, mt=8, mb=80),
-                               legend=dict(font=dict(size=11), orientation="h", y=-0.4))
+            fig3.update_layout(**layout(320, mr=12, mt=8, mb=160),
+                               legend=dict(font=dict(size=11), orientation="h", y=-0.7))
             fig3.update_xaxes(type="category", gridcolor="#1e1e30", linecolor="#1e1e30",
                               tickangle=45, tickfont=dict(size=10))
             st.plotly_chart(fig3, use_container_width=True, config=NO_MB)

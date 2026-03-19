@@ -86,7 +86,7 @@ def check_password():
 check_password()
 
 # ── Carga de datos ─────────────────────────────────────────────────────────────
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=0)
 def load_data():
     df = pd.read_csv(CSV_URL)
     df.columns = [c.strip() for c in df.columns]
@@ -518,10 +518,7 @@ elif pagina == "Género":
 
         gender_counts = df["Gender"].value_counts()
         total_gen     = len(df)
-        # Normalizar por si quedó alguna variante sin convertir
-        valores_unicos = df["Gender"].unique().tolist()
-        sin_dato_n = sum(gender_counts.get(v, 0) for v in valores_unicos
-                        if str(v).strip().lower() in ["sin dato", "unknown", "nan", "none", ""])
+        sin_dato_n    = int(gender_counts.get(SIN_DATO, 0))
         pct_sin_dato  = round(sin_dato_n / total_gen * 100, 1) if total_gen > 0 else 0
 
         generos_reales = [g for g in gender_counts.index if g != SIN_DATO]

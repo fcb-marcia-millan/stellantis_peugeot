@@ -563,9 +563,10 @@ elif pagina == "Género":
                 fig2 = px.bar(gm_df, x="am_modelocl", y="n", color="Gender",
                               color_discrete_map=COLOR_MAP_GEN,
                               barmode="group")
-                fig2.update_layout(**layout(280, mr=12, mt=8, mb=50),
-                                   legend=dict(font=dict(size=11), orientation="h", y=-0.3))
-                fig2.update_xaxes(type="category", gridcolor="#1e1e30", linecolor="#1e1e30")
+                fig2.update_layout(**layout(300, mr=12, mt=8, mb=120),
+                                   legend=dict(font=dict(size=11), orientation="h", y=-0.55))
+                fig2.update_xaxes(type="category", gridcolor="#1e1e30", linecolor="#1e1e30",
+                                  tickangle=45, tickfont=dict(size=10))
                 st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
         if "cl_dir_provincia" in df.columns:
@@ -577,9 +578,10 @@ elif pagina == "Género":
             fig3 = px.bar(gp_df, x="cl_dir_provincia", y="n", color="Gender",
                           color_discrete_map=COLOR_MAP_GEN,
                           barmode="stack")
-            fig3.update_layout(**layout(260, mr=12, mt=8, mb=60),
-                               xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"),
-                               legend=dict(font=dict(size=11), orientation="h", y=-0.35))
+            fig3.update_layout(**layout(280, mr=12, mt=8, mb=80),
+                               legend=dict(font=dict(size=11), orientation="h", y=-0.4))
+            fig3.update_xaxes(type="category", gridcolor="#1e1e30", linecolor="#1e1e30",
+                              tickangle=45, tickfont=dict(size=10))
             st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
 
         if "mes_compra" in df.columns:

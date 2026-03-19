@@ -50,7 +50,7 @@ html, body, [class*="css"] { font-family: 'Barlow', sans-serif; }
 
 # ── Constantes ─────────────────────────────────────────────────────────────────
 SHEET_ID = "1P3qFgAygEzKjc2P8jn0inJLji6h5IQEBwB68lx1SwL8"
-GID      = "1933435937"
+GID      = "900098796"
 CSV_URL  = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
 
 # Base layout sin margin — se pasa siempre por separado para evitar conflictos

@@ -538,16 +538,7 @@ elif pagina == "Género":
 
     if "Gender" not in df_gen.columns:
         st.warning("No se encontró la columna Gender en tus datos.")
-    else:
-        # Si hay dudas de caché, limpiar y recargar
-        if st.button("🔄 Actualizar datos de género"):
-            st.cache_data.clear()
-            st.rerun()
 
-        # DEBUG - borrar luego
-        raw_gender_vals = df_raw["Gender"].value_counts(dropna=False)
-        st.warning(f"RAW (antes de filtros): {raw_gender_vals.to_dict()}")
-        st.info(f"df_gen Gender counts: {df_gen['Gender'].value_counts(dropna=False).to_dict()} | Total filas: {len(df_gen)}")
 
         gender_counts = df_gen["Gender"].value_counts()
         total_gen     = len(df_gen)

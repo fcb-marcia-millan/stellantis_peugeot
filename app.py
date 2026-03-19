@@ -508,7 +508,19 @@ elif pagina == "Empresas":
 # ══════════════════════════════════════════════════════════════════════════════
 elif pagina == "Género":
 
-    if "Gender" not in df.columns:
+    # Usar df sin filtro de género para que Sin dato siempre aparezca
+    df_gen = df_raw.copy()
+    if modelo_sel != "Todos":
+        df_gen = df_gen[df_gen["am_modelocl"] == modelo_sel]
+    if provincia_sel != "Todas" and "cl_dir_provincia" in df_gen.columns:
+        df_gen = df_gen[df_gen["cl_dir_provincia"] == provincia_sel]
+    if tipo_sel != "Todos":
+        df_gen = df_gen[df_gen["tipo_cliente"] == tipo_sel]
+    if len(fecha_rango) == 2 and "vp_f_compra" in df_gen.columns:
+        df_gen = df_gen[(df_gen["vp_f_compra"].dt.date >= fecha_rango[0]) &
+                        (df_gen["vp_f_compra"].dt.date <= fecha_rango[1])]
+
+    if "Gender" not in df_gen.columns:
         st.warning("No se encontró la columna Gender en tus datos.")
     else:
         # Si hay dudas de caché, limpiar y recargar
@@ -516,11 +528,9 @@ elif pagina == "Género":
             st.cache_data.clear()
             st.rerun()
 
-        gender_counts = df["Gender"].value_counts()
-        total_gen     = len(df)
+        gender_counts = df_gen["Gender"].value_counts()
+        total_gen     = len(df_gen)
         sin_dato_n    = int(gender_counts.get(SIN_DATO, 0))
-        # DEBUG TEMPORAL - borrar luego
-        st.info(f"Valores únicos en Gender: {df['Gender'].unique().tolist()} | Sin dato: {sin_dato_n}")
         pct_sin_dato  = round(sin_dato_n / total_gen * 100, 1) if total_gen > 0 else 0
 
         generos_reales = [g for g in gender_counts.index if g != SIN_DATO]
@@ -554,7 +564,7 @@ elif pagina == "Género":
 
         with col1:
             st.markdown('<p class="section-title">Distribución por género</p>', unsafe_allow_html=True)
-            gen_df = df["Gender"].value_counts().reset_index()
+            gen_df = df_gen["Gender"].value_counts().reset_index()
             gen_df.columns = ["Gender", "n"]
             pie_colors = [COLOR_MAP_GEN.get(g, "#5794f2") for g in gen_df["Gender"]]
             fig = go.Figure(go.Pie(
@@ -568,7 +578,7 @@ elif pagina == "Género":
 
         with col2:
             st.markdown('<p class="section-title">Compras por género y modelo</p>', unsafe_allow_html=True)
-            gm_df = df.groupby(["am_modelocl","Gender"]).size().reset_index(name="n")
+            gm_df = df_gen.groupby(["am_modelocl","Gender"]).size().reset_index(name="n")
             if not gm_df.empty:
                 fig2 = px.bar(gm_df, x="am_modelocl", y="n", color="Gender",
                               color_discrete_map=COLOR_MAP_GEN,
@@ -579,10 +589,10 @@ elif pagina == "Género":
                                   tickangle=45, tickfont=dict(size=10))
                 st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
-        if "cl_dir_provincia" in df.columns:
+        if "cl_dir_provincia" in df_gen.columns:
             st.markdown('<p class="section-title">Distribución de género por provincia (top 10)</p>', unsafe_allow_html=True)
-            gp_df = (df.groupby(["cl_dir_provincia","Gender"]).size().reset_index(name="n"))
-            top_provs = (df.groupby("cl_dir_provincia").size()
+            gp_df = (df_gen.groupby(["cl_dir_provincia","Gender"]).size().reset_index(name="n"))
+            top_provs = (df_gen.groupby("cl_dir_provincia").size()
                          .nlargest(10).index.tolist())
             gp_df = gp_df[gp_df["cl_dir_provincia"].isin(top_provs)]
             fig3 = px.bar(gp_df, x="cl_dir_provincia", y="n", color="Gender",
@@ -594,9 +604,9 @@ elif pagina == "Género":
                               tickangle=45, tickfont=dict(size=10))
             st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
 
-        if "mes_compra" in df.columns:
+        if "mes_compra" in df_gen.columns:
             st.markdown('<p class="section-title">Tendencia mensual por género</p>', unsafe_allow_html=True)
-            gt_df = df.groupby(["mes_compra","Gender"]).size().reset_index(name="n")
+            gt_df = df_gen.groupby(["mes_compra","Gender"]).size().reset_index(name="n")
             fig4 = px.line(gt_df, x="mes_compra", y="n", color="Gender",
                            color_discrete_map=COLOR_MAP_GEN)
             fig4.update_traces(line_width=2)
@@ -607,13 +617,13 @@ elif pagina == "Género":
         st.markdown('<p class="section-title">Registro por género</p>', unsafe_allow_html=True)
         cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","Gender",
                                   "am_modelocl","cl_dir_localidad","cl_dir_provincia","vp_f_compra"]
-                     if c in df.columns]
+                     if c in df_gen.columns]
         rename_map = {
             "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
             "Gender":"Género","am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
             "cl_dir_provincia":"Provincia","vp_f_compra":"F. Compra"
         }
-        tabla = df[cols_show].rename(columns=rename_map).head(500)
+        tabla = df_gen[cols_show].rename(columns=rename_map).head(500)
         if "F. Compra" in tabla.columns:
             tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
         st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)

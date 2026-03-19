@@ -540,7 +540,7 @@ elif pagina == "Género":
         st.warning("No se encontró la columna Gender en tus datos.")
     else:
         # Si hay dudas de caché, limpiar y recargar
-        if st.button("🔄 Actualizar datos de género"):
+        if st.button(""):
             st.cache_data.clear()
             st.rerun()
 

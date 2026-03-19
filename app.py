@@ -203,7 +203,16 @@ st.markdown("<br>", unsafe_allow_html=True)
 NO_MB = {"displayModeBar": False}
 
 # Mapa de colores de género (global, usado en varias vistas)
-COLOR_MAP_GEN = {"M": "#0088cc", "F": "#e05c9e", SIN_DATO: "#555570"}
+# Cubre variantes en inglés (Male/Female) y español (M/F/Masculino/Femenino)
+COLOR_MAP_GEN = {
+    "Male":      "#0088cc",
+    "Female":    "#e05c9e",
+    "M":         "#0088cc",
+    "F":         "#e05c9e",
+    "Masculino": "#0088cc",
+    "Femenino":  "#e05c9e",
+    SIN_DATO:    "#555570",
+}
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GENERAL
@@ -550,13 +559,14 @@ elif pagina == "Género":
         with col2:
             st.markdown('<p class="section-title">Compras por género y modelo</p>', unsafe_allow_html=True)
             gm_df = df.groupby(["am_modelocl","Gender"]).size().reset_index(name="n")
-            fig2 = px.bar(gm_df, x="am_modelocl", y="n", color="Gender",
-                          color_discrete_map=COLOR_MAP_GEN,
-                          barmode="group")
-            fig2.update_layout(**layout(280, mr=12, mt=8, mb=50),
-                               xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"),
-                               legend=dict(font=dict(size=11), orientation="h", y=-0.3))
-            st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
+            if not gm_df.empty:
+                fig2 = px.bar(gm_df, x="am_modelocl", y="n", color="Gender",
+                              color_discrete_map=COLOR_MAP_GEN,
+                              barmode="group")
+                fig2.update_layout(**layout(280, mr=12, mt=8, mb=50),
+                                   legend=dict(font=dict(size=11), orientation="h", y=-0.3))
+                fig2.update_xaxes(type="category", gridcolor="#1e1e30", linecolor="#1e1e30")
+                st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
         if "cl_dir_provincia" in df.columns:
             st.markdown('<p class="section-title">Distribución de género por provincia (top 10)</p>', unsafe_allow_html=True)

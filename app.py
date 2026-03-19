@@ -76,11 +76,19 @@ def load_data():
     if "am_modelo" in df.columns and "am_modelocl" not in df.columns:
         df = df.rename(columns={"am_modelo": "am_modelocl"})
 
-    # Reemplazar nulls con "Sin dato" en columnas categóricas clave
-    for col in ["am_modelocl", "cl_dir_provincia", "cl_dir_localidad", "Gender"]:
+    for col in ["am_modelocl", "cl_dir_provincia", "cl_dir_localidad"]:
         if col in df.columns:
             df[col] = df[col].fillna(SIN_DATO).replace("", SIN_DATO).astype(str).str.strip()
             df[col] = df[col].replace("nan", SIN_DATO)
+
+    # ── Gender: "Unknown" y nulls → "Sin dato" ──────────────────────────────
+    if "Gender" in df.columns:
+        df["Gender"] = (df["Gender"]
+                        .fillna(SIN_DATO)
+                        .replace("", SIN_DATO)
+                        .astype(str)
+                        .str.strip())
+        df["Gender"] = df["Gender"].replace({"nan": SIN_DATO, "Unknown": SIN_DATO})
 
     if "vp_f_compra" in df.columns:
         df["vp_f_compra"] = pd.to_datetime(df["vp_f_compra"], errors="coerce", dayfirst=True)
@@ -94,12 +102,6 @@ def load_data():
     else:
         df["tipo_cliente"] = "Particular"
     return df
-
-try:
-    df_raw = load_data()
-except Exception as e:
-    st.error(f"No se pudo cargar la Google Sheet. Verificá que sea pública. Error: {e}")
-    st.stop()
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:

@@ -113,10 +113,9 @@ def load_data():
 
     if "vp_f_compra" in df.columns:
         df["vp_f_compra"] = pd.to_datetime(df["vp_f_compra"], errors="coerce", dayfirst=True)
-        # Fechas nulas → año=0, mes="Sin fecha" (0 = sin dato en fecha)
-        df["mes_compra"] = df["vp_f_compra"].dt.to_period("M").astype(str)
-        df["mes_compra"] = df["mes_compra"].replace("NaT", "Sin fecha").fillna("Sin fecha")
-        df["año_compra"] = df["vp_f_compra"].dt.year.fillna(0).astype(int)
+        # Fechas nulas quedan como NaN — los gráficos las ignoran automáticamente
+        df["mes_compra"] = df["vp_f_compra"].dt.to_period("M").astype(str).replace("NaT", pd.NA)
+        df["año_compra"] = df["vp_f_compra"].dt.year
 
     if "empresa" in df.columns:
         df["tipo_cliente"] = df["empresa"].apply(
@@ -206,14 +205,14 @@ st.markdown(f"""
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Disclaimer fechas nulas
-if "año_compra" in df_raw.columns:
-    n_sin_fecha = int((df_raw["año_compra"] == 0).sum())
+if "vp_f_compra" in df_raw.columns:
+    n_sin_fecha = int(df_raw["vp_f_compra"].isna().sum())
     if n_sin_fecha > 0:
         st.markdown(f"""
         <div style="background:rgba(255,180,0,0.07);border:1px solid rgba(255,180,0,0.25);
                     border-radius:6px;padding:8px 16px;margin-bottom:8px;font-size:11px;color:#a08030;">
             ⚠️ <b>{n_sin_fecha:,} registros</b> no tienen fecha de compra registrada.
-            En los gráficos por año y mes aparecen como <b>año 0 / Sin fecha</b>.
+            Los gráficos temporales (por año y por mes) solo consideran registros con fecha válida.
         </div>""", unsafe_allow_html=True)
 
 NO_MB = {"displayModeBar": False}
@@ -268,9 +267,12 @@ if pagina == "General":
 
     with col_anio:
         st.markdown('<p class="section-title">Compras por año</p>', unsafe_allow_html=True)
-        anio_df = df.groupby("año_compra").size().reset_index(name="n").sort_values("n", ascending=True)
+        anio_df = (df.dropna(subset=["año_compra"])
+                   .groupby("año_compra").size().reset_index(name="n")
+                   .sort_values("n", ascending=True))
+        anio_df["año_compra"] = anio_df["año_compra"].astype(int).astype(str)
         fig = go.Figure(go.Bar(
-            x=anio_df["n"], y=anio_df["año_compra"].astype(str), orientation="h",
+            x=anio_df["n"], y=anio_df["año_compra"], orientation="h",
             marker_color="#0088cc", marker_line_width=0,
             text=anio_df["n"], textposition="outside",
             textfont=dict(size=10, color="#a0a0b8"),

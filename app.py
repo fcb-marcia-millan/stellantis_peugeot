@@ -113,8 +113,10 @@ def load_data():
 
     if "vp_f_compra" in df.columns:
         df["vp_f_compra"] = pd.to_datetime(df["vp_f_compra"], errors="coerce", dayfirst=True)
-        df["mes_compra"]  = df["vp_f_compra"].dt.to_period("M").astype(str)
-        df["año_compra"]  = df["vp_f_compra"].dt.year
+        # Fechas nulas → año=0, mes="Sin fecha" (0 = sin dato en fecha)
+        df["mes_compra"] = df["vp_f_compra"].dt.to_period("M").astype(str)
+        df["mes_compra"] = df["mes_compra"].replace("NaT", "Sin fecha").fillna("Sin fecha")
+        df["año_compra"] = df["vp_f_compra"].dt.year.fillna(0).astype(int)
 
     if "empresa" in df.columns:
         df["tipo_cliente"] = df["empresa"].apply(
@@ -187,8 +189,9 @@ if tipo_sel != "Todos":
 if gender_sel != "Todos" and "Gender" in df.columns:
     df = df[df["Gender"] == gender_sel]
 if len(fecha_rango) == 2 and "vp_f_compra" in df.columns:
-    df = df[(df["vp_f_compra"].dt.date >= fecha_rango[0]) &
-            (df["vp_f_compra"].dt.date <= fecha_rango[1])]
+    mask = ((df["vp_f_compra"].dt.date >= fecha_rango[0]) &
+            (df["vp_f_compra"].dt.date <= fecha_rango[1]))
+    df = df[mask | df["vp_f_compra"].isna()]
 
 # ── Header ─────────────────────────────────────────────────────────────────────
 st.markdown(f"""
@@ -201,6 +204,17 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
+
+# Disclaimer fechas nulas
+if "año_compra" in df_raw.columns:
+    n_sin_fecha = int((df_raw["año_compra"] == 0).sum())
+    if n_sin_fecha > 0:
+        st.markdown(f"""
+        <div style="background:rgba(255,180,0,0.07);border:1px solid rgba(255,180,0,0.25);
+                    border-radius:6px;padding:8px 16px;margin-bottom:8px;font-size:11px;color:#a08030;">
+            ⚠️ <b>{n_sin_fecha:,} registros</b> no tienen fecha de compra registrada.
+            En los gráficos por año y mes aparecen como <b>año 0 / Sin fecha</b>.
+        </div>""", unsafe_allow_html=True)
 
 NO_MB = {"displayModeBar": False}
 
@@ -515,8 +529,10 @@ elif pagina == "Género":
     if tipo_sel != "Todos":
         df_gen = df_gen[df_gen["tipo_cliente"] == tipo_sel]
     if len(fecha_rango) == 2 and "vp_f_compra" in df_gen.columns:
-        df_gen = df_gen[(df_gen["vp_f_compra"].dt.date >= fecha_rango[0]) &
-                        (df_gen["vp_f_compra"].dt.date <= fecha_rango[1])]
+        mask_fecha = ((df_gen["vp_f_compra"].dt.date >= fecha_rango[0]) &
+                      (df_gen["vp_f_compra"].dt.date <= fecha_rango[1]))
+        # Incluir filas con fecha nula para no perder Sin dato
+        df_gen = df_gen[mask_fecha | df_gen["vp_f_compra"].isna()]
 
     if "Gender" not in df_gen.columns:
         st.warning("No se encontró la columna Gender en tus datos.")

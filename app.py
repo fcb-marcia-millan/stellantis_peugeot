@@ -472,116 +472,75 @@ elif pagina == "Empresas":
 # ══════════════════════════════════════════════════════════════════════════════
 # GÉNERO
 # ══════════════════════════════════════════════════════════════════════════════
-elif pagina == "Género":
+elif pagina == "Por modelo":
 
-    if "Gender" not in df.columns:
-        st.warning("No se encontró la columna Gender en tus datos.")
-    else:
-        # ── KPIs ──
-        gender_counts = df["Gender"].value_counts()
-        total_gen     = len(df)
-        sin_dato_n    = gender_counts.get(SIN_DATO, 0)
-        pct_sin_dato  = round(sin_dato_n / total_gen * 100, 1) if total_gen > 0 else 0
+    COLOR_MAP_GEN = {"M": "#0088cc", "F": "#e05c9e", SIN_DATO: "#555570"}
 
-        # Colores por género
-        COLOR_MAP = {"M": "#0088cc", "F": "#e05c9e", SIN_DATO: "#555570"}
-        # Intentamos detectar valores reales (pueden ser "M"/"F", "Masculino"/"Femenino", etc.)
-        generos_reales = [g for g in gender_counts.index if g != SIN_DATO]
+    col1, col2 = st.columns(2, gap="medium")
 
-        kpi_html = ""
-        for g in generos_reales:
-            n   = gender_counts.get(g, 0)
-            pct = round(n / total_gen * 100, 1) if total_gen > 0 else 0
-            col = COLOR_MAP.get(g, "#5794f2")
-            kpi_html += f"""
-            <div class="kpi-card">
-              <div class="kpi-label">{g}</div>
-              <div class="kpi-value" style="color:{col}">{n:,}</div>
-              <div class="kpi-sub">{pct}% del total</div>
-              <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{pct}%;background:{col}"></div></div>
-            </div>"""
-
-        kpi_html += f"""
-        <div class="kpi-card">
-          <div class="kpi-label">Sin dato</div>
-          <div class="kpi-value" style="color:#555570">{sin_dato_n:,}</div>
-          <div class="kpi-sub">{pct_sin_dato}% sin información</div>
-          <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{pct_sin_dato}%;background:#555570"></div></div>
-        </div>"""
-
-        st.markdown(f'<div class="kpi-grid">{kpi_html}</div>', unsafe_allow_html=True)
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # ── Fila: Donut | Modelos por género ──
-        col1, col2 = st.columns(2, gap="medium")
-
-        with col1:
-            st.markdown('<p class="section-title">Distribución por género</p>', unsafe_allow_html=True)
-            gen_df = df["Gender"].value_counts().reset_index()
-            gen_df.columns = ["Gender", "n"]
-            pie_colors = [COLOR_MAP.get(g, "#5794f2") for g in gen_df["Gender"]]
+    with col1:
+        # ── Torta: distribución de géneros ──────────────────────────────────
+        if "Gender" in df.columns:
+            gen_pie = df["Gender"].value_counts().reset_index()
+            gen_pie.columns = ["Gender", "n"]
+            pie_colors = [COLOR_MAP_GEN.get(g, "#5794f2") for g in gen_pie["Gender"]]
             fig = go.Figure(go.Pie(
-                labels=gen_df["Gender"], values=gen_df["n"], hole=0.5,
+                labels=gen_pie["Gender"], values=gen_pie["n"], hole=0.5,
                 marker=dict(colors=pie_colors),
                 textfont=dict(size=11),
             ))
-            fig.update_layout(**layout(280, mr=12, mt=8))
-            fig.update_layout(showlegend=True, legend=dict(font=dict(size=11)))
+            fig.update_layout(**layout(280, mr=12, mt=36))
+            fig.update_layout(
+                showlegend=True,
+                title=dict(text="Distribución por género", font=dict(size=12), x=0),
+                legend=dict(font=dict(size=11)),
+            )
             st.plotly_chart(fig, use_container_width=True, config=NO_MB)
+        else:
+            st.info("No se encontró la columna Gender.")
 
-        with col2:
-            st.markdown('<p class="section-title">Compras por género y modelo</p>', unsafe_allow_html=True)
-            gm_df = df.groupby(["am_modelocl","Gender"]).size().reset_index(name="n")
-            bar_colors_gm = [COLOR_MAP.get(g, "#5794f2") for g in gm_df["Gender"]]
-            fig2 = px.bar(gm_df, x="am_modelocl", y="n", color="Gender",
-                          color_discrete_map=COLOR_MAP,
-                          barmode="group")
-            fig2.update_layout(**layout(280, mr=12, mt=8, mb=50),
-                               xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"),
-                               legend=dict(font=dict(size=11), orientation="h", y=-0.3))
-            st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
+    with col2:
+        mod_uni = (df.groupby("am_modelocl")["cl_k_cliente"]
+                   .nunique().reset_index(name="n").sort_values("n", ascending=False))
+        bar_colors = ["#555570" if m == SIN_DATO else "#0088cc" for m in mod_uni["am_modelocl"]]
+        fig2 = go.Figure(go.Bar(
+            x=mod_uni["am_modelocl"].astype(str), y=mod_uni["n"],
+            marker_color=bar_colors, marker_line_width=0,
+            text=mod_uni["n"], textposition="outside",
+            textfont=dict(size=10, color="#a0a0b8"),
+        ))
+        fig2.update_layout(**layout(280, mr=12, mt=36))
+        fig2.update_layout(
+            title=dict(text="Clientes únicos por modelo", font=dict(size=12), x=0),
+            xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"),
+        )
+        st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
-        # ── Género por provincia ──
-        if "cl_dir_provincia" in df.columns:
-            st.markdown('<p class="section-title">Distribución de género por provincia (top 10)</p>', unsafe_allow_html=True)
-            gp_df = (df.groupby(["cl_dir_provincia","Gender"]).size().reset_index(name="n"))
-            top_provs = (df.groupby("cl_dir_provincia").size()
-                         .nlargest(10).index.tolist())
-            gp_df = gp_df[gp_df["cl_dir_provincia"].isin(top_provs)]
-            fig3 = px.bar(gp_df, x="cl_dir_provincia", y="n", color="Gender",
-                          color_discrete_map=COLOR_MAP,
-                          barmode="stack")
-            fig3.update_layout(**layout(260, mr=12, mt=8, mb=60),
-                               xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"),
-                               legend=dict(font=dict(size=11), orientation="h", y=-0.35))
+    if "mes_compra" in df.columns and not df.empty:
+        st.markdown('<p class="section-title">Tendencia mensual por modelo</p>', unsafe_allow_html=True)
+        trend = (df.groupby(["mes_compra", "am_modelocl"])
+                 .size().reset_index(name="n")
+                 .sort_values("mes_compra"))
+        if not trend.empty:
+            fig3 = px.line(
+                trend, x="mes_compra", y="n", color="am_modelocl",
+                color_discrete_sequence=["#0088cc","#5794f2","#00aadd","#73bf69",
+                                         "#fade2a","#ff780a","#555570"],
+            )
+            fig3.update_traces(line_width=2)
+            fig3.update_layout(**layout(240, mr=12, mb=50),
+                               legend=dict(font=dict(size=11), orientation="h", y=-0.25))
             st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
 
-        # ── Tendencia por género ──
-        if "mes_compra" in df.columns:
-            st.markdown('<p class="section-title">Tendencia mensual por género</p>', unsafe_allow_html=True)
-            gt_df = df.groupby(["mes_compra","Gender"]).size().reset_index(name="n")
-            fig4 = px.line(gt_df, x="mes_compra", y="n", color="Gender",
-                           color_discrete_map=COLOR_MAP)
-            fig4.update_traces(line_width=2)
-            fig4.update_layout(**layout(200, mr=12, mb=50),
-                               legend=dict(font=dict(size=11), orientation="h", y=-0.3))
-            st.plotly_chart(fig4, use_container_width=True, config=NO_MB)
-
-        # ── Tabla ──
-        st.markdown('<p class="section-title">Registro por género</p>', unsafe_allow_html=True)
-        cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","Gender",
-                                  "am_modelocl","cl_dir_localidad","cl_dir_provincia","vp_f_compra"]
-                     if c in df.columns]
-        rename_map = {
-            "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
-            "Gender":"Género","am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
-            "cl_dir_provincia":"Provincia","vp_f_compra":"F. Compra"
-        }
-        tabla = df[cols_show].rename(columns=rename_map).head(500)
-        if "F. Compra" in tabla.columns:
-            tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
-        st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
-
+    st.markdown('<p class="section-title">Resumen por modelo</p>', unsafe_allow_html=True)
+    resumen = (df.groupby("am_modelocl")
+               .agg(Compras=("vp_f_compra","count"),
+                    Clientes_unicos=("cl_k_cliente","nunique"),
+                    Provincias=("cl_dir_provincia","nunique"))
+               .reset_index()
+               .rename(columns={"am_modelocl":"Modelo","Clientes_unicos":"Clientes únicos"})
+               .sort_values("Compras", ascending=False))
+    st.dataframe(resumen, use_container_width=True, hide_index=True)
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align:center;font-size:10px;color:#333350;letter-spacing:1px;'>"

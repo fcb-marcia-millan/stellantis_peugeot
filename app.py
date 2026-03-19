@@ -86,7 +86,7 @@ def check_password():
 check_password()
 
 # ── Carga de datos ─────────────────────────────────────────────────────────────
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def load_data():
     df = pd.read_csv(CSV_URL)
     df.columns = [c.strip() for c in df.columns]
@@ -98,29 +98,20 @@ def load_data():
             df[col] = df[col].fillna(SIN_DATO).replace("", SIN_DATO).astype(str).str.strip()
             df[col] = df[col].replace("nan", SIN_DATO)
 
-    # Gender: "Unknown", vacíos y nulls → "Sin dato"
+    # Gender: normalizar todos los valores no reconocidos → "Sin dato"
     if "Gender" in df.columns:
-        df["Gender"] = (
-            df["Gender"]
-            .fillna(SIN_DATO)
-            .replace("", SIN_DATO)
-            .astype(str)
-            .str.strip()
-        )
-        # Reemplazar todas las variantes de Unknown/sin dato
-        df["Gender"] = df["Gender"].replace({
-            "nan": SIN_DATO,
-            "Unknown": SIN_DATO,
-            "unknown": SIN_DATO,
-            "UNKNOWN": SIN_DATO,
-            "Sin dato": SIN_DATO,
-            "None": SIN_DATO,
-            "none": SIN_DATO,
-            "": SIN_DATO,
-        })
-        # Captura cualquier otra variante con regex
-        mask_unknown = df["Gender"].str.lower().str.contains("unknown", na=False)
-        df.loc[mask_unknown, "Gender"] = SIN_DATO
+        df["Gender"] = df["Gender"].fillna("").astype(str).str.strip()
+        GENEROS_VALIDOS = {"male", "female", "m", "f", "masculino", "femenino"}
+        def normalizar_gender(v):
+            v_clean = v.strip()
+            if v_clean.lower() in GENEROS_VALIDOS:
+                # Normalizar a Male/Female
+                if v_clean.lower() in ("male", "m", "masculino"):
+                    return "Male"
+                if v_clean.lower() in ("female", "f", "femenino"):
+                    return "Female"
+            return SIN_DATO
+        df["Gender"] = df["Gender"].apply(normalizar_gender)
 
     if "vp_f_compra" in df.columns:
         df["vp_f_compra"] = pd.to_datetime(df["vp_f_compra"], errors="coerce", dayfirst=True)
@@ -527,7 +518,10 @@ elif pagina == "Género":
 
         gender_counts = df["Gender"].value_counts()
         total_gen     = len(df)
-        sin_dato_n    = gender_counts.get(SIN_DATO, 0)
+        # Normalizar por si quedó alguna variante sin convertir
+        valores_unicos = df["Gender"].unique().tolist()
+        sin_dato_n = sum(gender_counts.get(v, 0) for v in valores_unicos
+                        if str(v).strip().lower() in ["sin dato", "unknown", "nan", "none", ""])
         pct_sin_dato  = round(sin_dato_n / total_gen * 100, 1) if total_gen > 0 else 0
 
         generos_reales = [g for g in gender_counts.index if g != SIN_DATO]

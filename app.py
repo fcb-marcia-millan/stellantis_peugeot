@@ -155,7 +155,7 @@ with st.sidebar:
     else:
         provincia_sel = "Todas"
 
-    tipo_sel = st.selectbox("Tipo de cliente", ["Todos", "Particular", "Corporativo"])
+   # tipo_sel = st.selectbox("Tipo de cliente", ["Todos", "Particular", "Corporativo"]) FILTRO DE EMPRESA
 
     if "Gender" in df_raw.columns:
         gender_opts = ["Todos"] + sorted(df_raw["Gender"].unique().tolist())
@@ -174,7 +174,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("#### Vistas")
-    pagina = st.radio("", ["General", "Por modelo", "Por provincia", "Empresas", "Género"],
+    pagina = st.radio("", ["General", "Por modelo", "Por provincia", "Género"], #aca se agrega la empresa (cuando vuelva)
                       label_visibility="collapsed")
 
 # ── Filtros ────────────────────────────────────────────────────────────────────
@@ -183,8 +183,8 @@ if modelo_sel != "Todos":
     df = df[df["am_modelocl"] == modelo_sel]
 if provincia_sel != "Todas" and "cl_dir_provincia" in df.columns:
     df = df[df["cl_dir_provincia"] == provincia_sel]
-if tipo_sel != "Todos":
-    df = df[df["tipo_cliente"] == tipo_sel]
+#if tipo_sel != "Todos":
+   # df = df[df["tipo_cliente"] == tipo_sel]
 if gender_sel != "Todos" and "Gender" in df.columns:
     df = df[df["Gender"] == gender_sel]
 if len(fecha_rango) == 2 and "vp_f_compra" in df.columns:
@@ -305,7 +305,8 @@ if pagina == "General":
         ))
         fig3.update_layout(**layout(160, mr=12))
         st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
-
+        
+''' TABLA DE REGISTROS
     st.markdown('<p class="section-title">Registro de clientes</p>', unsafe_allow_html=True)
     cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","am_modelocl",
                               "cl_dir_localidad","cl_dir_provincia","empresa","vp_f_compra","Gender"]
@@ -319,6 +320,7 @@ if pagina == "General":
     if "F. Compra" in tabla.columns:
         tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
     st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
+   ''' 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # POR MODELO
@@ -441,6 +443,7 @@ elif pagina == "Por provincia":
 # ══════════════════════════════════════════════════════════════════════════════
 # EMPRESAS
 # ══════════════════════════════════════════════════════════════════════════════
+'''
 elif pagina == "Empresas":
 
     df_corp = df[pd.to_numeric(df["empresa"], errors="coerce") == 1].copy()
@@ -516,7 +519,7 @@ elif pagina == "Empresas":
     if "F. Compra" in tabla.columns:
         tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
     st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
-
+'''
 # ══════════════════════════════════════════════════════════════════════════════
 # GÉNERO
 # ══════════════════════════════════════════════════════════════════════════════
@@ -624,6 +627,8 @@ elif pagina == "Género":
             fig4.update_layout(**layout(200, mr=12, mb=50),
                                legend=dict(font=dict(size=11), orientation="h", y=-0.3))
             st.plotly_chart(fig4, use_container_width=True, config=NO_MB)
+        
+        '''
 
         st.markdown('<p class="section-title">Registro por género</p>', unsafe_allow_html=True)
         cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","Gender",
@@ -638,6 +643,7 @@ elif pagina == "Género":
         if "F. Compra" in tabla.columns:
             tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
         st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
+        '''
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(

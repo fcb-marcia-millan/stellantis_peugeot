@@ -530,8 +530,8 @@ elif pagina == "Género":
         df_gen = df_gen[df_gen["am_modelocl"] == modelo_sel]
     if provincia_sel != "Todas" and "cl_dir_provincia" in df_gen.columns:
         df_gen = df_gen[df_gen["cl_dir_provincia"] == provincia_sel]
-    if tipo_sel != "Todos":
-        df_gen = df_gen[df_gen["tipo_cliente"] == tipo_sel]
+    # if tipo_sel != "Todos":
+    #     df_gen = df_gen[df_gen["tipo_cliente"] == tipo_sel]
     if len(fecha_rango) == 2 and "vp_f_compra" in df_gen.columns:
         mask_fecha = ((df_gen["vp_f_compra"].dt.date >= fecha_rango[0]) &
                       (df_gen["vp_f_compra"].dt.date <= fecha_rango[1]))

@@ -174,7 +174,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("#### Vistas")
-    pagina = st.radio("", ["General", "Por modelo", "Por provincia", "Empresas", "Género"],
+    pagina = st.radio("", ["General", "Por modelo", "Por provincia", "Género"],
                       label_visibility="collapsed")
 
 # ── Filtros ────────────────────────────────────────────────────────────────────

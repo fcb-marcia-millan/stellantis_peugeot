@@ -155,7 +155,7 @@ with st.sidebar:
     else:
         provincia_sel = "Todas"
 
-    tipo_sel = st.selectbox("Tipo de cliente", ["Todos", "Particular", "Corporativo"])
+    #tipo_sel = st.selectbox("Tipo de cliente", ["Todos", "Particular", "Corporativo"])
 
     if "Gender" in df_raw.columns:
         gender_opts = ["Todos"] + sorted(df_raw["Gender"].unique().tolist())
@@ -183,8 +183,8 @@ if modelo_sel != "Todos":
     df = df[df["am_modelocl"] == modelo_sel]
 if provincia_sel != "Todas" and "cl_dir_provincia" in df.columns:
     df = df[df["cl_dir_provincia"] == provincia_sel]
-if tipo_sel != "Todos":
-    df = df[df["tipo_cliente"] == tipo_sel]
+# if tipo_sel != "Todos":
+#     df = df[df["tipo_cliente"] == tipo_sel]
 if gender_sel != "Todos" and "Gender" in df.columns:
     df = df[df["Gender"] == gender_sel]
 if len(fecha_rango) == 2 and "vp_f_compra" in df.columns:
@@ -235,7 +235,7 @@ COLOR_MAP_GEN = {
 if pagina == "General":
 
     total_clientes = df["cl_k_cliente"].nunique() if "cl_k_cliente" in df.columns else len(df)
-    total_compras  = len(df_raw) if modelo_sel == "Todos" and provincia_sel == "Todas" and tipo_sel == "Todos" else len(df)
+    total_compras  = len(df_raw) if modelo_sel == "Todos" and provincia_sel == "Todas" else len(df)
     promedio = round(len(df) / total_clientes, 2) if total_clientes > 0 else 0
 
     st.markdown(f"""
@@ -528,8 +528,8 @@ elif pagina == "Género":
         df_gen = df_gen[df_gen["am_modelocl"] == modelo_sel]
     if provincia_sel != "Todas" and "cl_dir_provincia" in df_gen.columns:
         df_gen = df_gen[df_gen["cl_dir_provincia"] == provincia_sel]
-    if tipo_sel != "Todos":
-        df_gen = df_gen[df_gen["tipo_cliente"] == tipo_sel]
+    # if tipo_sel != "Todos":
+    #     df_gen = df_gen[df_gen["tipo_cliente"] == tipo_sel]
     if len(fecha_rango) == 2 and "vp_f_compra" in df_gen.columns:
         mask_fecha = ((df_gen["vp_f_compra"].dt.date >= fecha_rango[0]) &
                       (df_gen["vp_f_compra"].dt.date <= fecha_rango[1]))

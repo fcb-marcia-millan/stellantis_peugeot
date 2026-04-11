@@ -117,12 +117,12 @@ def load_data():
         df["mes_compra"] = df["vp_f_compra"].dt.to_period("M").astype(str).replace("NaT", pd.NA)
         df["año_compra"] = df["vp_f_compra"].dt.year
 
-    # if "empresa" in df.columns:
-    #     df["tipo_cliente"] = df["empresa"].apply(
-    #         lambda x: "Corporativo" if pd.notna(x) and str(x).strip() not in ("", "nan") else "Particular"
-    #     )
-    # else:
-    #     df["tipo_cliente"] = "Particular"
+    if "empresa" in df.columns:
+         df["tipo_cliente"] = df["empresa"].apply(
+            lambda x: "Corporativo" if pd.notna(x) and str(x).strip() not in ("", "nan") else "Particular"
+        )
+    else:
+        df["tipo_cliente"] = "Particular"
     return df
 
 try:

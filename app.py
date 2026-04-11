@@ -306,21 +306,21 @@ if pagina == "General":
         fig3.update_layout(**layout(160, mr=12))
         st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
         
-''' TABLA DE REGISTROS
-    st.markdown('<p class="section-title">Registro de clientes</p>', unsafe_allow_html=True)
-    cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","am_modelocl",
-                              "cl_dir_localidad","cl_dir_provincia","empresa","vp_f_compra","Gender"]
-                 if c in df.columns]
-    rename_map = {
-        "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
-        "am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
-        "cl_dir_provincia":"Provincia","empresa":"Empresa","vp_f_compra":"F. Compra","Gender":"Género"
-    }
-    tabla = df[cols_show].rename(columns=rename_map).head(500)
-    if "F. Compra" in tabla.columns:
-        tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
-    st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
-   ''' 
+
+# TABLA DE REGISTROS
+#     st.markdown('<p class="section-title">Registro de clientes</p>', unsafe_allow_html=True)
+#     cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","am_modelocl",
+#                               "cl_dir_localidad","cl_dir_provincia","empresa","vp_f_compra","Gender"]
+#                  if c in df.columns]
+#     rename_map = {
+#         "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
+#         "am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
+#         "cl_dir_provincia":"Provincia","empresa":"Empresa","vp_f_compra":"F. Compra","Gender":"Género"
+#     }
+#     tabla = df[cols_show].rename(columns=rename_map).head(500)
+#     if "F. Compra" in tabla.columns:
+#         tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
+#     st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # POR MODELO
@@ -443,83 +443,82 @@ elif pagina == "Por provincia":
 # ══════════════════════════════════════════════════════════════════════════════
 # EMPRESAS
 # ══════════════════════════════════════════════════════════════════════════════
-'''
-elif pagina == "Empresas":
+# elif pagina == "Empresas":
 
-    df_corp = df[pd.to_numeric(df["empresa"], errors="coerce") == 1].copy()
-    total_corp   = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else len(df_corp)
-    compras_corp = len(df_corp)
+#     df_corp = df[pd.to_numeric(df["empresa"], errors="coerce") == 1].copy()
+#     total_corp   = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else len(df_corp)
+#     compras_corp = len(df_corp)
 
-    st.markdown(f"""
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Clientes de empresa</div>
-        <div class="kpi-value" style="color:#fade2a">{total_corp:,}</div>
-        <div class="kpi-sub">Suma de DNI's únicos registrados (Con empresa=1)</div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#fade2a"></div></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Total compras empresas</div>
-        <div class="kpi-value" style="color:#fade2a">{compras_corp:,}</div>
-        <div class="kpi-sub">Todos los registros (Con empresa=1)</div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%;background:#fade2a"></div></div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">% sobre total</div>
-        <div class="kpi-value" style="color:#fade2a">{round(compras_corp/len(df)*100,1) if len(df)>0 else 0}%</div>
-        <div class="kpi-sub">Compras empresa / Total compras</div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{round(compras_corp/len(df)*100,1) if len(df)>0 else 0}%;background:#fade2a"></div></div>
-      </div>
-    </div>
-    """, unsafe_allow_html=True)
+#     st.markdown(f"""
+#     <div class="kpi-grid">
+#       <div class="kpi-card">
+#         <div class="kpi-label">Clientes de empresa</div>
+#         <div class="kpi-value" style="color:#fade2a">{total_corp:,}</div>
+#         <div class="kpi-sub">Suma de DNI's únicos registrados (Con empresa=1)</div>
+#         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#fade2a"></div></div>
+#       </div>
+#       <div class="kpi-card">
+#         <div class="kpi-label">Total compras empresas</div>
+#         <div class="kpi-value" style="color:#fade2a">{compras_corp:,}</div>
+#         <div class="kpi-sub">Todos los registros (Con empresa=1)</div>
+#         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%;background:#fade2a"></div></div>
+#       </div>
+#       <div class="kpi-card">
+#         <div class="kpi-label">% sobre total</div>
+#         <div class="kpi-value" style="color:#fade2a">{round(compras_corp/len(df)*100,1) if len(df)>0 else 0}%</div>
+#         <div class="kpi-sub">Compras empresa / Total compras</div>
+#         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{round(compras_corp/len(df)*100,1) if len(df)>0 else 0}%;background:#fade2a"></div></div>
+#       </div>
+#     </div>
+#     """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
+#     st.markdown("<br>", unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2, gap="medium")
+#     col1, col2 = st.columns(2, gap="medium")
 
-    with col1:
-        st.markdown('<p class="section-title">Modelos preferidos</p>', unsafe_allow_html=True)
-        mc = df_corp.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=False)
-        bar_colors = ["#555570" if m == SIN_DATO else "#fade2a" for m in mc["am_modelocl"]]
-        fig = go.Figure(go.Bar(
-            x=mc["am_modelocl"].astype(str), y=mc["n"],
-            marker_color=bar_colors, marker_line_width=0,
-            text=mc["n"], textposition="outside",
-            textfont=dict(size=10, color="#a0a0b8"),
-        ))
-        fig.update_layout(**layout(280, mr=12))
-        fig.update_layout(xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"))
-        st.plotly_chart(fig, use_container_width=True, config=NO_MB)
+#     with col1:
+#         st.markdown('<p class="section-title">Modelos preferidos</p>', unsafe_allow_html=True)
+#         mc = df_corp.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=False)
+#         bar_colors = ["#555570" if m == SIN_DATO else "#fade2a" for m in mc["am_modelocl"]]
+#         fig = go.Figure(go.Bar(
+#             x=mc["am_modelocl"].astype(str), y=mc["n"],
+#             marker_color=bar_colors, marker_line_width=0,
+#             text=mc["n"], textposition="outside",
+#             textfont=dict(size=10, color="#a0a0b8"),
+#         ))
+#         fig.update_layout(**layout(280, mr=12))
+#         fig.update_layout(xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"))
+#         st.plotly_chart(fig, use_container_width=True, config=NO_MB)
 
-    with col2:
-        if "cl_dir_provincia" in df_corp.columns:
-            st.markdown('<p class="section-title">Por provincia</p>', unsafe_allow_html=True)
-            pc = (df_corp.groupby("cl_dir_provincia")["cl_k_cliente"]
-                  .nunique().reset_index(name="n").sort_values("n", ascending=True).tail(8))
-            bar_colors2 = ["#555570" if p == SIN_DATO else "#c8a800" for p in pc["cl_dir_provincia"]]
-            fig2 = go.Figure(go.Bar(
-                x=pc["n"], y=pc["cl_dir_provincia"], orientation="h",
-                marker_color=bar_colors2, marker_line_width=0,
-                text=pc["n"], textposition="outside",
-                textfont=dict(size=10, color="#a0a0b8"),
-            ))
-            fig2.update_layout(**layout(280, mr=80))
-            st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
+#     with col2:
+#         if "cl_dir_provincia" in df_corp.columns:
+#             st.markdown('<p class="section-title">Por provincia</p>', unsafe_allow_html=True)
+#             pc = (df_corp.groupby("cl_dir_provincia")["cl_k_cliente"]
+#                   .nunique().reset_index(name="n").sort_values("n", ascending=True).tail(8))
+#             bar_colors2 = ["#555570" if p == SIN_DATO else "#c8a800" for p in pc["cl_dir_provincia"]]
+#             fig2 = go.Figure(go.Bar(
+#                 x=pc["n"], y=pc["cl_dir_provincia"], orientation="h",
+#                 marker_color=bar_colors2, marker_line_width=0,
+#                 text=pc["n"], textposition="outside",
+#                 textfont=dict(size=10, color="#a0a0b8"),
+#             ))
+#             fig2.update_layout(**layout(280, mr=80))
+#             st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
 
-    st.markdown('<p class="section-title">Registro de clientes de empresa</p>', unsafe_allow_html=True)
-    cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","am_modelocl",
-                              "cl_dir_localidad","cl_dir_provincia","vp_f_compra","Gender"]
-                 if c in df_corp.columns]
-    rename_map = {
-        "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
-        "am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
-        "cl_dir_provincia":"Provincia","vp_f_compra":"F. Compra","Gender":"Género"
-    }
-    tabla = df_corp[cols_show].rename(columns=rename_map).head(500)
-    if "F. Compra" in tabla.columns:
-        tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
-    st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
-'''
+#     st.markdown('<p class="section-title">Registro de clientes de empresa</p>', unsafe_allow_html=True)
+#     cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","am_modelocl",
+#                               "cl_dir_localidad","cl_dir_provincia","vp_f_compra","Gender"]
+#                  if c in df_corp.columns]
+#     rename_map = {
+#         "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
+#         "am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
+#         "cl_dir_provincia":"Provincia","vp_f_compra":"F. Compra","Gender":"Género"
+#     }
+#     tabla = df_corp[cols_show].rename(columns=rename_map).head(500)
+#     if "F. Compra" in tabla.columns:
+#         tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
+#     st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
+
 # ══════════════════════════════════════════════════════════════════════════════
 # GÉNERO
 # ══════════════════════════════════════════════════════════════════════════════
@@ -628,22 +627,22 @@ elif pagina == "Género":
                                legend=dict(font=dict(size=11), orientation="h", y=-0.3))
             st.plotly_chart(fig4, use_container_width=True, config=NO_MB)
         
-        '''
+        
 
-        st.markdown('<p class="section-title">Registro por género</p>', unsafe_allow_html=True)
-        cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","Gender",
-                                  "am_modelocl","cl_dir_localidad","cl_dir_provincia","vp_f_compra"]
-                     if c in df_gen.columns]
-        rename_map = {
-            "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
-            "Gender":"Género","am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
-            "cl_dir_provincia":"Provincia","vp_f_compra":"F. Compra"
-        }
-        tabla = df_gen[cols_show].rename(columns=rename_map).head(500)
-        if "F. Compra" in tabla.columns:
-            tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
-        st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
-        '''
+        # st.markdown('<p class="section-title">Registro por género</p>', unsafe_allow_html=True)
+        # cols_show = [c for c in ["cl_apellido","cl_nombre","cl_numero_doc","Gender",
+        #                           "am_modelocl","cl_dir_localidad","cl_dir_provincia","vp_f_compra"]
+        #              if c in df_gen.columns]
+        # rename_map = {
+        #     "cl_apellido":"Apellido","cl_nombre":"Nombre","cl_numero_doc":"N° Doc",
+        #     "Gender":"Género","am_modelocl":"Modelo","cl_dir_localidad":"Localidad",
+        #     "cl_dir_provincia":"Provincia","vp_f_compra":"F. Compra"
+        # }
+        # tabla = df_gen[cols_show].rename(columns=rename_map).head(500)
+        # if "F. Compra" in tabla.columns:
+        #     tabla["F. Compra"] = tabla["F. Compra"].dt.strftime("%d/%m/%Y")
+        # st.dataframe(tabla, use_container_width=True, hide_index=True, height=320)
+        
 
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(

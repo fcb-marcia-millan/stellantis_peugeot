@@ -155,7 +155,8 @@ with st.sidebar:
     else:
         provincia_sel = []
 
-    #tipo_sel = st.multiselect("Tipo de cliente", ["Particular", "Corporativo"], default=None)
+    tipo_opts = sorted(df_raw["tipo_cliente"].unique().tolist())
+    tipo_sel = st.multiselect("Tipo de cliente", tipo_opts, default=None)
 
     if "Gender" in df_raw.columns:
         gender_opts = sorted(df_raw["Gender"].unique().tolist())
@@ -183,8 +184,8 @@ if modelo_sel:
     df = df[df["am_modelocl"].isin(modelo_sel)]
 if provincia_sel and "cl_dir_provincia" in df.columns:
     df = df[df["cl_dir_provincia"].isin(provincia_sel)]
-# if tipo_sel:
-#     df = df[df["tipo_cliente"].isin(tipo_sel)]
+if tipo_sel:
+    df = df[df["tipo_cliente"].isin(tipo_sel)]
 if gender_sel and "Gender" in df.columns:
     df = df[df["Gender"].isin(gender_sel)]
 if len(fecha_rango) == 2 and "vp_f_compra" in df.columns:
@@ -429,7 +430,8 @@ elif pagina == "Por provincia":
 elif pagina == "Empresas":
 
     df_corp = df[df["tipo_cliente"] == "Corporativo"].copy()
-    total_corp   = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else len(df_corp)
+    total_clientes_corp = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else 0
+    total_empresa = int(df_corp["empresa"].sum()) if "empresa" in df_corp.columns else 0
     compras_corp = len(df_corp)
 
     st.markdown(f"""

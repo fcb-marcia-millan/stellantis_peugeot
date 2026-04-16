@@ -437,15 +437,15 @@ elif pagina == "Empresas":
     st.markdown(f"""
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">Clientes de empresa</div>
-        <div class="kpi-value" style="color:#fade2a">{total_corp:,}</div>
-        <div class="kpi-sub">Suma de DNI's únicos registrados</div>
+        <div class="kpi-label">Clientes únicos empresa</div>
+        <div class="kpi-value" style="color:#fade2a">{total_clientes_corp:,}</div>
+        <div class="kpi-sub">DNI's únicos (tipo_cliente = Corporativo)</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#fade2a"></div></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Total compras empresas</div>
-        <div class="kpi-value" style="color:#fade2a">{compras_corp:,}</div>
-        <div class="kpi-sub">Todos los registros corporativos</div>
+        <div class="kpi-label">Total empresa</div>
+        <div class="kpi-value" style="color:#fade2a">{total_empresa:,}</div>
+        <div class="kpi-sub">Suma de columna empresa=1</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%;background:#fade2a"></div></div>
       </div>
       <div class="kpi-card">

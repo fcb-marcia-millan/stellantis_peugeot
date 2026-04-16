@@ -429,29 +429,49 @@ elif pagina == "Por provincia":
 # ══════════════════════════════════════════════════════════════════════════════
 elif pagina == "Empresas":
 
-    df_corp = df[df["tipo_cliente"] == "Corporativo"].copy()
-    total_clientes_corp = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else 0
-    compras_corp = len(df_corp)
+    # Todos los registros donde empresa=1
+    df_corp = df_raw.copy()
+    if "empresa" in df_corp.columns:
+        df_corp["empresa"] = pd.to_numeric(df_corp["empresa"], errors="coerce").fillna(0)
+        df_corp = df_corp[df_corp["empresa"] == 1]
+    
+    # Aplicar filtros de modelo, provincia, género, fecha a df_corp
+    if modelo_sel:
+        df_corp = df_corp[df_corp["am_modelocl"].isin(modelo_sel)]
+    if provincia_sel and "cl_dir_provincia" in df_corp.columns:
+        df_corp = df_corp[df_corp["cl_dir_provincia"].isin(provincia_sel)]
+    if gender_sel and "Gender" in df_corp.columns:
+        df_corp = df_corp[df_corp["Gender"].isin(gender_sel)]
+    if len(fecha_rango) == 2 and "vp_f_compra" in df_corp.columns:
+        mask = ((df_corp["vp_f_compra"].dt.date >= fecha_rango[0]) &
+                (df_corp["vp_f_compra"].dt.date <= fecha_rango[1]))
+        df_corp = df_corp[mask | df_corp["vp_f_compra"].isna()]
+    
+    # KPIs
+    clientes_unicos_empresa = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else 0
+    registros_empresa = int(df_corp["empresa"].sum()) if "empresa" in df_corp.columns else 0
+    total_registros_sin_filtro = len(df_raw)
+    pct_empresa = round(registros_empresa / total_registros_sin_filtro * 100, 1) if total_registros_sin_filtro > 0 else 0
 
     st.markdown(f"""
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label">Clientes únicos empresa</div>
-        <div class="kpi-value" style="color:#fade2a">{total_clientes_corp:,}</div>
-        <div class="kpi-sub">DNI's únicos (tipo_cliente = Corporativo)</div>
+        <div class="kpi-value" style="color:#fade2a">{clientes_unicos_empresa:,}</div>
+        <div class="kpi-sub">COUNT DISTINCT DNI donde empresa=1</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:#fade2a"></div></div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Registros corporativos</div>
-        <div class="kpi-value" style="color:#fade2a">{compras_corp:,}</div>
-        <div class="kpi-sub">Total de transacciones/compras</div>
+        <div class="kpi-label">Registros empresa</div>
+        <div class="kpi-value" style="color:#fade2a">{registros_empresa:,}</div>
+        <div class="kpi-sub">Suma de todos los 1 en columna empresa</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%;background:#fade2a"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">% sobre total</div>
-        <div class="kpi-value" style="color:#fade2a">{round(compras_corp/len(df)*100,1) if len(df)>0 else 0}%</div>
-        <div class="kpi-sub">Compras empresa / Total compras</div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{round(compras_corp/len(df)*100,1) if len(df)>0 else 0}%;background:#fade2a"></div></div>
+        <div class="kpi-value" style="color:#fade2a">{pct_empresa}%</div>
+        <div class="kpi-sub">Suma empresa / Total registros (sin filtro)</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:{pct_empresa}%;background:#fade2a"></div></div>
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -462,20 +482,23 @@ elif pagina == "Empresas":
 
     with col1:
         st.markdown('<p class="section-title">Modelos preferidos</p>', unsafe_allow_html=True)
-        mc = df_corp.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=False)
-        bar_colors = ["#555570" if m == SIN_DATO else "#fade2a" for m in mc["am_modelocl"]]
-        fig = go.Figure(go.Bar(
-            x=mc["am_modelocl"].astype(str), y=mc["n"],
-            marker_color=bar_colors, marker_line_width=0,
-            text=mc["n"], textposition="outside",
-            textfont=dict(size=10, color="#a0a0b8"),
-        ))
-        fig.update_layout(**layout(280, mr=12))
-        fig.update_layout(xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"))
-        st.plotly_chart(fig, use_container_width=True, config=NO_MB)
+        if not df_corp.empty:
+            mc = df_corp.groupby("am_modelocl").size().reset_index(name="n").sort_values("n", ascending=False)
+            bar_colors = ["#555570" if m == SIN_DATO else "#fade2a" for m in mc["am_modelocl"]]
+            fig = go.Figure(go.Bar(
+                x=mc["am_modelocl"].astype(str), y=mc["n"],
+                marker_color=bar_colors, marker_line_width=0,
+                text=mc["n"], textposition="outside",
+                textfont=dict(size=10, color="#a0a0b8"),
+            ))
+            fig.update_layout(**layout(280, mr=12))
+            fig.update_layout(xaxis=dict(type="category", gridcolor="#1e1e30", linecolor="#1e1e30"))
+            st.plotly_chart(fig, use_container_width=True, config=NO_MB)
+        else:
+            st.info("Sin datos de empresa con los filtros seleccionados")
 
     with col2:
-        if "cl_dir_provincia" in df_corp.columns:
+        if "cl_dir_provincia" in df_corp.columns and not df_corp.empty:
             st.markdown('<p class="section-title">Por provincia</p>', unsafe_allow_html=True)
             pc = (df_corp.groupby("cl_dir_provincia")["cl_k_cliente"]
                   .nunique().reset_index(name="n").sort_values("n", ascending=True).tail(8))

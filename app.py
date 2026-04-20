@@ -118,11 +118,10 @@ def load_data():
         df["año_compra"] = df["vp_f_compra"].dt.year
 
     if "empresa" in df.columns:
-        df["tipo_cliente"] = df["empresa"].apply(
-            lambda x: "Corporativo" if pd.notna(x) and str(x).strip() not in ("", "nan") else "Particular"
-        )
+        df["empresa"] = pd.to_numeric(df["empresa"], errors="coerce").fillna(0).astype(int)
     else:
-        df["tipo_cliente"] = "Particular"
+        df["empresa"] = 0
+
     return df
 
 try:
@@ -147,20 +146,17 @@ with st.sidebar:
     st.markdown("#### Filtros")
 
     modelos_opts = sorted(df_raw["am_modelocl"].unique().tolist())
-    modelo_sel = st.multiselect("Modelo", modelos_opts, default=None)
+    modelo_sel = st.multiselect("Modelo", modelos_opts, default=[])
 
     if "cl_dir_provincia" in df_raw.columns:
         prov_opts = sorted(df_raw["cl_dir_provincia"].unique().tolist())
-        provincia_sel = st.multiselect("Provincia", prov_opts, default=None)
+        provincia_sel = st.multiselect("Provincia", prov_opts, default=[])
     else:
         provincia_sel = []
 
-    tipo_opts = sorted(df_raw["tipo_cliente"].unique().tolist())
-    tipo_sel = st.multiselect("Tipo de cliente", tipo_opts, default=None)
-
     if "Gender" in df_raw.columns:
         gender_opts = sorted(df_raw["Gender"].unique().tolist())
-        gender_sel = st.multiselect("Género", gender_opts, default=None)
+        gender_sel = st.multiselect("Género", gender_opts, default=[])
     else:
         gender_sel = []
 
@@ -184,8 +180,6 @@ if modelo_sel:
     df = df[df["am_modelocl"].isin(modelo_sel)]
 if provincia_sel and "cl_dir_provincia" in df.columns:
     df = df[df["cl_dir_provincia"].isin(provincia_sel)]
-if tipo_sel:
-    df = df[df["tipo_cliente"].isin(tipo_sel)]
 if gender_sel and "Gender" in df.columns:
     df = df[df["Gender"].isin(gender_sel)]
 if len(fecha_rango) == 2 and "vp_f_compra" in df.columns:
@@ -429,13 +423,14 @@ elif pagina == "Por provincia":
 # ══════════════════════════════════════════════════════════════════════════════
 elif pagina == "Empresas":
 
-    # Todos los registros donde empresa=1
-    df_corp = df_raw.copy()
-    if "empresa" in df_corp.columns:
-        df_corp["empresa"] = pd.to_numeric(df_corp["empresa"], errors="coerce").fillna(0)
-        df_corp = df_corp[df_corp["empresa"] == 1]
+    # Cálculos de KPIs usando df_raw para denominadores correctos
+    total_registros_sin_filtro = len(df_raw)
+    total_registros_empresa_sin_filtro = int(df_raw["empresa"].sum())
     
-    # Aplicar filtros de modelo, provincia, género, fecha a df_corp
+    # df_corp: todos los registros donde empresa=1, luego aplicar filtros
+    df_corp = df_raw[df_raw["empresa"] == 1].copy()
+    
+    # Aplicar los mismos filtros que en df (modelo, provincia, género, fecha)
     if modelo_sel:
         df_corp = df_corp[df_corp["am_modelocl"].isin(modelo_sel)]
     if provincia_sel and "cl_dir_provincia" in df_corp.columns:
@@ -449,9 +444,8 @@ elif pagina == "Empresas":
     
     # KPIs
     clientes_unicos_empresa = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else 0
-    registros_empresa = int(df_corp["empresa"].sum()) if "empresa" in df_corp.columns else 0
-    total_registros_sin_filtro = len(df_raw)
-    pct_empresa = round(registros_empresa / total_registros_sin_filtro * 100, 1) if total_registros_sin_filtro > 0 else 0
+    registros_empresa = len(df_corp)
+    pct_empresa = round(total_registros_empresa_sin_filtro / total_registros_sin_filtro * 100, 1) if total_registros_sin_filtro > 0 else 0
 
     st.markdown(f"""
     <div class="kpi-grid">
@@ -463,7 +457,7 @@ elif pagina == "Empresas":
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Registros empresa</div>
-        <div class="kpi-value" style="color:#fade2a">{registros_empresa:,}</div>
+        <div class="kpi-value" style="color:#fade2a">{total_registros_empresa_sin_filtro:,}</div>
         <div class="kpi-sub">Suma de todos los 1 en columna empresa</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%;background:#fade2a"></div></div>
       </div>
@@ -511,6 +505,20 @@ elif pagina == "Empresas":
             ))
             fig2.update_layout(**layout(280, mr=80))
             st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
+
+    if not df_corp.empty and "mes_compra" in df_corp.columns:
+        st.markdown('<p class="section-title">Tendencia mensual empresas</p>', unsafe_allow_html=True)
+        trend_corp = (df_corp.groupby("mes_compra").size().reset_index(name="n")
+                      .sort_values("mes_compra"))
+        if not trend_corp.empty:
+            fig3 = go.Figure(go.Bar(
+                x=trend_corp["mes_compra"], y=trend_corp["n"],
+                marker_color="#fade2a", marker_line_width=0,
+                text=trend_corp["n"], textposition="outside",
+                textfont=dict(size=10, color="#a0a0b8"),
+            ))
+            fig3.update_layout(**layout(220, mr=12))
+            st.plotly_chart(fig3, use_container_width=True, config=NO_MB)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # GÉNERO

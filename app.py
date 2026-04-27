@@ -50,8 +50,8 @@ html, body, [class*="css"] { font-family: 'Barlow', sans-serif; }
 """, unsafe_allow_html=True)
 
 # ── Constantes ─────────────────────────────────────────────────────────────────
-SHEET_ID = "1P3qFgAygEzKjc2P8jn0inJLji6h5IQEBwB68lx1SwL8"
-GID      = "1111388380"
+SHEET_ID = "12MFMjn0SP-UlX8HEWv8jLAuIm5L0OgFQ76CYaq8RHCc"
+GID      = "1736669234"
 CSV_URL  = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
 
 SIN_DATO = "Sin dato"

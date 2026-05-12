@@ -68,7 +68,7 @@ BASE = dict(
 def layout(height=200, ml=12, mr=50, mt=8, mb=8, **extra):
     return dict(**BASE, height=height, margin=dict(l=ml, r=mr, t=mt, b=mb), **extra)
 
-# ── Contraseña (PRIMERO, antes de cargar datos o renderizar nada) ──────────────
+# ── Contraseña ─────────────────────────────────────────────────────────────────
 def check_password():
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -98,7 +98,6 @@ def load_data():
             df[col] = df[col].fillna(SIN_DATO).replace("", SIN_DATO).astype(str).str.strip()
             df[col] = df[col].replace("nan", SIN_DATO)
 
-    # Gender: null/vacío/desconocido → "Sin dato", normalizar Male/Female
     if "Gender" in df.columns:
         df["Gender"] = (df["Gender"]
                         .fillna(SIN_DATO)
@@ -113,7 +112,6 @@ def load_data():
 
     if "vp_f_compra" in df.columns:
         df["vp_f_compra"] = pd.to_datetime(df["vp_f_compra"], errors="coerce", dayfirst=True)
-        # Fechas nulas quedan como NaN — los gráficos las ignoran automáticamente
         df["mes_compra"] = df["vp_f_compra"].dt.to_period("M").astype(str).replace("NaT", pd.NA)
         df["año_compra"] = df["vp_f_compra"].dt.year
 
@@ -154,6 +152,12 @@ with st.sidebar:
     else:
         provincia_sel = []
 
+    if "cl_dir_localidad" in df_raw.columns:
+        loc_opts = sorted(df_raw["cl_dir_localidad"].unique().tolist())
+        localidad_sel = st.multiselect("Localidad", loc_opts, default=[])
+    else:
+        localidad_sel = []
+
     if "Gender" in df_raw.columns:
         gender_opts = sorted(df_raw["Gender"].unique().tolist())
         gender_sel = st.multiselect("Género", gender_opts, default=[])
@@ -171,7 +175,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("#### Vistas")
-    pagina = st.radio("", ["General", "Por modelo", "Por provincia", "Empresas", "Género"],
+    pagina = st.radio("", ["General", "Por modelo", "Por provincia", "Por localidad", "Empresas", "Género"],
                       label_visibility="collapsed")
 
 # ── Filtros ────────────────────────────────────────────────────────────────────
@@ -180,6 +184,8 @@ if modelo_sel:
     df = df[df["am_modelocl"].isin(modelo_sel)]
 if provincia_sel and "cl_dir_provincia" in df.columns:
     df = df[df["cl_dir_provincia"].isin(provincia_sel)]
+if localidad_sel and "cl_dir_localidad" in df.columns:
+    df = df[df["cl_dir_localidad"].isin(localidad_sel)]
 if gender_sel and "Gender" in df.columns:
     df = df[df["Gender"].isin(gender_sel)]
 if len(fecha_rango) == 2 and "vp_f_compra" in df.columns:
@@ -199,7 +205,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Disclaimer fechas nulas
 if "vp_f_compra" in df_raw.columns:
     n_sin_fecha = int(df_raw["vp_f_compra"].isna().sum())
     if n_sin_fecha > 0:
@@ -212,7 +217,6 @@ if "vp_f_compra" in df_raw.columns:
 
 NO_MB = {"displayModeBar": False}
 
-# Mapa de colores de género (global, usado en varias vistas)
 COLOR_MAP_GEN = {
     "Male":      "#0088cc",
     "Female":    "#e05c9e",
@@ -308,7 +312,6 @@ elif pagina == "Por modelo":
     col1, col2 = st.columns(2, gap="medium")
 
     with col1:
-        # Torta: distribución de compras por modelo
         mod_pie = df.groupby("am_modelocl").size().reset_index(name="n")
         colors  = ["#0088cc","#5794f2","#00aadd","#73bf69","#fade2a","#ff780a","#e02f44","#555570"]
         label_colors = ["#555570" if l == SIN_DATO else colors[i % len(colors)]
@@ -419,32 +422,93 @@ elif pagina == "Por provincia":
         st.dataframe(top_mod, use_container_width=True, hide_index=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
+# POR LOCALIDAD
+# ══════════════════════════════════════════════════════════════════════════════
+elif pagina == "Por localidad":
+
+    if "cl_dir_localidad" not in df.columns:
+        st.warning("No se encontró la columna cl_dir_localidad en tus datos.")
+    else:
+        col1, col2 = st.columns(2, gap="medium")
+
+        with col1:
+            all_loc_df = (df.groupby("cl_dir_localidad")
+                          .agg(clientes=("cl_k_cliente", "nunique"))
+                          .reset_index().sort_values("clientes", ascending=True))
+            bar_colors = ["#555570" if l == SIN_DATO else "#00aadd" for l in all_loc_df["cl_dir_localidad"]]
+            fig = go.Figure(go.Bar(
+                x=all_loc_df["clientes"], y=all_loc_df["cl_dir_localidad"], orientation="h",
+                marker_color=bar_colors, marker_line_width=0,
+                text=all_loc_df["clientes"], textposition="outside",
+                textfont=dict(size=10, color="#a0a0b8"),
+            ))
+            fig.update_layout(
+                **layout(max(300, len(all_loc_df) * 22), ml=12, mr=60, mt=36, mb=12),
+                title=dict(text="Clientes únicos por localidad", font=dict(size=12), x=0),
+            )
+            st.plotly_chart(fig, use_container_width=True, config=NO_MB)
+
+        with col2:
+            top_loc = (df.groupby("cl_dir_localidad")["cl_k_cliente"]
+                       .nunique().reset_index(name="n")
+                       .sort_values("n", ascending=False).head(10)
+                       .sort_values("n", ascending=True))
+            bar_colors2 = ["#555570" if l == SIN_DATO else "#5794f2" for l in top_loc["cl_dir_localidad"]]
+            fig2 = go.Figure(go.Bar(
+                x=top_loc["n"], y=top_loc["cl_dir_localidad"], orientation="h",
+                marker_color=bar_colors2, marker_line_width=0,
+                text=top_loc["n"], textposition="outside",
+                textfont=dict(size=10, color="#a0a0b8"),
+            ))
+            fig2.update_layout(**layout(340, ml=12, mr=60, mt=36, mb=12),
+                               title=dict(text="Top 10 localidades (clientes únicos)", font=dict(size=12), x=0))
+            st.plotly_chart(fig2, use_container_width=True, config=NO_MB)
+
+        st.markdown('<p class="section-title">Modelo más comprado por localidad</p>', unsafe_allow_html=True)
+        top_mod_loc = (df.groupby(["cl_dir_localidad", "am_modelocl"]).size()
+                       .reset_index(name="n").sort_values("n", ascending=False)
+                       .groupby("cl_dir_localidad").first().reset_index()
+                       .rename(columns={"cl_dir_localidad": "Localidad",
+                                        "am_modelocl": "Modelo más comprado", "n": "Compras"}))
+        st.dataframe(top_mod_loc.sort_values("Compras", ascending=False),
+                     use_container_width=True, hide_index=True)
+
+        if "cl_dir_provincia" in df.columns:
+            st.markdown('<p class="section-title">Localidades por provincia</p>', unsafe_allow_html=True)
+            lp_df = (df.groupby(["cl_dir_provincia", "cl_dir_localidad"])["cl_k_cliente"]
+                     .nunique().reset_index(name="clientes")
+                     .sort_values("clientes", ascending=False)
+                     .rename(columns={
+                         "cl_dir_provincia": "Provincia",
+                         "cl_dir_localidad": "Localidad",
+                         "clientes": "Clientes únicos",
+                     }))
+            st.dataframe(lp_df, use_container_width=True, hide_index=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
 # EMPRESAS
 # ══════════════════════════════════════════════════════════════════════════════
 elif pagina == "Empresas":
 
-    # Cálculos de KPIs usando df_raw para denominadores correctos
     total_registros_sin_filtro = len(df_raw)
     total_registros_empresa_sin_filtro = int(df_raw["empresa"].sum())
-    
-    # df_corp: todos los registros donde empresa=1, luego aplicar filtros
+
     df_corp = df_raw[df_raw["empresa"] == 1].copy()
-    
-    # Aplicar los mismos filtros que en df (modelo, provincia, género, fecha)
+
     if modelo_sel:
         df_corp = df_corp[df_corp["am_modelocl"].isin(modelo_sel)]
     if provincia_sel and "cl_dir_provincia" in df_corp.columns:
         df_corp = df_corp[df_corp["cl_dir_provincia"].isin(provincia_sel)]
+    if localidad_sel and "cl_dir_localidad" in df_corp.columns:
+        df_corp = df_corp[df_corp["cl_dir_localidad"].isin(localidad_sel)]
     if gender_sel and "Gender" in df_corp.columns:
         df_corp = df_corp[df_corp["Gender"].isin(gender_sel)]
     if len(fecha_rango) == 2 and "vp_f_compra" in df_corp.columns:
         mask = ((df_corp["vp_f_compra"].dt.date >= fecha_rango[0]) &
                 (df_corp["vp_f_compra"].dt.date <= fecha_rango[1]))
         df_corp = df_corp[mask | df_corp["vp_f_compra"].isna()]
-    
-    # KPIs
+
     clientes_unicos_empresa = df_corp["cl_k_cliente"].nunique() if "cl_k_cliente" in df_corp.columns else 0
-    registros_empresa = len(df_corp)
     pct_empresa = round(total_registros_empresa_sin_filtro / total_registros_sin_filtro * 100, 1) if total_registros_sin_filtro > 0 else 0
 
     st.markdown(f"""
@@ -525,7 +589,6 @@ elif pagina == "Empresas":
 # ══════════════════════════════════════════════════════════════════════════════
 elif pagina == "Género":
 
-    # Usar df filtrado (ya aplicados modelo, provincia, fecha)
     if "Gender" not in df.columns:
         st.warning("No se encontró la columna Gender en tus datos.")
     else:

@@ -432,23 +432,6 @@ elif pagina == "Por localidad":
         col1, col2 = st.columns(2, gap="medium")
 
         with col1:
-            all_loc_df = (df.groupby("cl_dir_localidad")
-                          .agg(clientes=("cl_k_cliente", "nunique"))
-                          .reset_index().sort_values("clientes", ascending=True))
-            bar_colors = ["#555570" if l == SIN_DATO else "#00aadd" for l in all_loc_df["cl_dir_localidad"]]
-            fig = go.Figure(go.Bar(
-                x=all_loc_df["clientes"], y=all_loc_df["cl_dir_localidad"], orientation="h",
-                marker_color=bar_colors, marker_line_width=0,
-                text=all_loc_df["clientes"], textposition="outside",
-                textfont=dict(size=10, color="#a0a0b8"),
-            ))
-            fig.update_layout(
-                **layout(max(300, len(all_loc_df) * 22), ml=12, mr=60, mt=36, mb=12),
-                title=dict(text="Clientes únicos por localidad", font=dict(size=12), x=0),
-            )
-            st.plotly_chart(fig, use_container_width=True, config=NO_MB)
-
-        with col2:
             top_loc = (df.groupby("cl_dir_localidad")["cl_k_cliente"]
                        .nunique().reset_index(name="n")
                        .sort_values("n", ascending=False).head(10)

@@ -232,9 +232,12 @@ COLOR_MAP_GEN = {
 # ══════════════════════════════════════════════════════════════════════════════
 if pagina == "General":
 
-    total_clientes = df["cl_k_cliente"].nunique() if "cl_k_cliente" in df.columns else len(df)
-    total_compras  = len(df)
-    promedio = round(len(df) / total_clientes, 2) if total_clientes > 0 else 0
+    # Filtrar compras con cliente válido
+    df_con_cliente = df.dropna(subset=["cl_k_cliente"])
+
+    total_clientes = df_con_cliente["cl_k_cliente"].nunique()
+    total_compras  = len(df_con_cliente)
+    promedio       = round(total_compras / total_clientes, 2) if total_clientes > 0 else 0
 
     st.markdown(f"""
     <div class="kpi-grid">
@@ -247,13 +250,13 @@ if pagina == "General":
       <div class="kpi-card">
         <div class="kpi-label">Total de compras</div>
         <div class="kpi-value">{total_compras:,}</div>
-        <div class="kpi-sub">Todos los registros</div>
+        <div class="kpi-sub">Compras con cliente vinculado</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%"></div></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">Promedio por cliente</div>
         <div class="kpi-value">{promedio}</div>
-        <div class="kpi-sub">Total compras / Clientes únicos</div>
+        <div class="kpi-sub">Compras con data de cliente / Clientes únicos</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" style="width:50%"></div></div>
       </div>
     </div>
